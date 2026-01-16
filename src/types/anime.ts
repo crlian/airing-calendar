@@ -50,3 +50,13 @@ export interface ParsedBroadcast {
   day: string;
   time: string;
 }
+
+export interface SearchAnimeResult {
+  data: AnimeData[];
+  pagination: {
+    currentPage: number;
+    hasNextPage: boolean;
+    lastVisiblePage: number;
+    totalItems: number;
+  };
+}

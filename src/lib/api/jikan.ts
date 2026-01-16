@@ -1,4 +1,4 @@
-import type { AnimeData, JikanResponse } from "@/types/anime";
+import type { AnimeData, JikanResponse, SearchAnimeResult } from "@/types/anime";
 
 const BASE_URL = "https://api.jikan.moe/v4";
 const RATE_LIMIT_DELAY = 500; // 500ms between requests (2 req/sec)
@@ -88,12 +88,12 @@ class JikanClient {
   }
 
   /**
-   * Gets currently airing anime from the current season
+   * Gets currently airing anime from the current season with pagination support
    */
-  async getSeasonNow(): Promise<AnimeData[]> {
+  async getSeasonNow(page: number = 1): Promise<SearchAnimeResult> {
     try {
       const response = await this.request<JikanResponse<AnimeData[]>>(
-        "/seasons/now"
+        `/seasons/now?page=${page}`
       );
 
       // Filter anime that have broadcast information
@@ -101,23 +101,49 @@ class JikanClient {
         (anime) => anime.broadcast?.string
       );
 
-      return animeWithBroadcast;
+      return {
+        data: animeWithBroadcast,
+        pagination: {
+          currentPage: response.pagination?.current_page ?? 1,
+          hasNextPage: response.pagination?.has_next_page ?? false,
+          lastVisiblePage: response.pagination?.last_visible_page ?? 1,
+          totalItems: response.pagination?.items.total ?? 0,
+        }
+      };
     } catch (error) {
       console.error("Failed to fetch seasonal anime:", error);
-      return [];
+      return {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          hasNextPage: false,
+          lastVisiblePage: 1,
+          totalItems: 0,
+        }
+      };
     }
   }
 
   /**
-   * Searches for anime by query
+   * Searches for anime by query with pagination support
    */
-  async searchAnime(query: string): Promise<AnimeData[]> {
-    if (!query.trim()) return [];
+  async searchAnime(query: string, page: number = 1): Promise<SearchAnimeResult> {
+    if (!query.trim()) {
+      return {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          hasNextPage: false,
+          lastVisiblePage: 1,
+          totalItems: 0,
+        }
+      };
+    }
 
     try {
       const encodedQuery = encodeURIComponent(query);
       const response = await this.request<JikanResponse<AnimeData[]>>(
-        `/anime?q=${encodedQuery}&status=airing&order_by=popularity`
+        `/anime?q=${encodedQuery}&status=airing&order_by=popularity&page=${page}`
       );
 
       // Filter anime that have broadcast information
@@ -125,10 +151,26 @@ class JikanClient {
         (anime) => anime.broadcast?.string
       );
 
-      return animeWithBroadcast;
+      return {
+        data: animeWithBroadcast,
+        pagination: {
+          currentPage: response.pagination?.current_page ?? 1,
+          hasNextPage: response.pagination?.has_next_page ?? false,
+          lastVisiblePage: response.pagination?.last_visible_page ?? 1,
+          totalItems: response.pagination?.items.total ?? 0,
+        }
+      };
     } catch (error) {
       console.error("Failed to search anime:", error);
-      return [];
+      return {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          hasNextPage: false,
+          lastVisiblePage: 1,
+          totalItems: 0,
+        }
+      };
     }
   }
 

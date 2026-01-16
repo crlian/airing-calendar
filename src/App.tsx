@@ -6,7 +6,15 @@ import { useAnimeData } from "@/hooks/useAnimeData";
 
 function App() {
   // Fetch seasonal anime
-  const { data: seasonalAnime, isLoading: isSeasonalLoading } = useSeasonalAnime();
+  const {
+    data: seasonalAnime,
+    isLoading: isSeasonalLoading,
+    hasNextPage: seasonalHasNextPage,
+    currentPage: seasonalCurrentPage,
+    totalPages: seasonalTotalPages,
+    isLoadingMore: seasonalIsLoadingMore,
+    loadMore: loadMoreSeasonal,
+  } = useSeasonalAnime();
 
   // Manage selected anime
   const { selectedIds, addAnime, removeAnime } = useSelectedAnime();
@@ -27,6 +35,11 @@ function App() {
           onAddAnime={addAnime}
           onRemoveAnime={removeAnime}
           isSeasonalLoading={isSeasonalLoading}
+          seasonalHasNextPage={seasonalHasNextPage}
+          seasonalCurrentPage={seasonalCurrentPage}
+          seasonalTotalPages={seasonalTotalPages}
+          seasonalIsLoadingMore={seasonalIsLoadingMore}
+          onLoadMoreSeasonal={loadMoreSeasonal}
         />
       </div>
 
