@@ -51,6 +51,7 @@ export function Sidebar({
       setCurrentPage(1);
       setHasNextPage(false);
       setTotalPages(1);
+      setIsSearching(false);
       return;
     }
 
@@ -67,6 +68,7 @@ export function Sidebar({
     setCurrentPage(1);
     setHasNextPage(false);
     setTotalPages(1);
+    setIsSearching(localResults.length === 0);
 
     // Fase 2: Si no hay resultados locales, buscar en API (en background, sin bloqueo)
     if (localResults.length === 0) {
@@ -75,13 +77,18 @@ export function Sidebar({
           setSearchResults(result.data);
           setHasNextPage(result.pagination.hasNextPage);
           setTotalPages(result.pagination.lastVisiblePage);
+          setIsSearching(false);
         }).catch((error) => {
           console.error("Search failed:", error);
           setSearchResults([]);
           setHasNextPage(false);
           setTotalPages(1);
+          setIsSearching(false);
         });
       });
+    }
+    if (localResults.length > 0) {
+      setIsSearching(false);
     }
   }, [seasonalAnime]);
 
@@ -107,7 +114,7 @@ export function Sidebar({
 
   // Determine what to display
   const displayAnime = hasSearched ? searchResults : seasonalAnime;
-  const isLoading = hasSearched ? isPending : isSeasonalLoading;
+  const isLoading = hasSearched ? isPending || isSearching : isSeasonalLoading;
 
   return (
     <div className="flex flex-col h-screen border-r border-black bg-white">
@@ -127,7 +134,9 @@ export function Sidebar({
           </div>
         ) : displayAnime.length === 0 ? (
           <div className="text-center text-gray-600 py-8">
-            {hasSearched ? "No results found" : "No anime available"}
+            {hasSearched
+              ? (isSearching ? "Searching..." : "No results found")
+              : "No anime available"}
           </div>
         ) : (
           <>

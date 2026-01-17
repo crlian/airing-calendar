@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { AnimeData } from "@/types/anime";
 import type { CalendarEvent } from "@/types/calendar";
 import { parseBroadcastString, isValidBroadcast } from "@/lib/utils/parser";
-import { convertJSTToLocal, getDateTimeForCurrentWeek, toISOString } from "@/lib/utils/timezone";
+import { convertJSTToLocal } from "@/lib/utils/timezone";
 
 interface UseAnimeDataParams {
   selectedIds: number[];
@@ -13,6 +13,16 @@ interface UseAnimeDataReturn {
   calendarEvents: CalendarEvent[];
   selectedAnimeList: AnimeData[];
 }
+
+const DAY_TO_INDEX: Record<string, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
 
 export function useAnimeData({
   selectedIds,
@@ -46,26 +56,19 @@ export function useAnimeData({
         continue;
       }
 
-      // Get datetime for the current week
-      const startDateTime = getDateTimeForCurrentWeek(
-        localTime.localDay,
-        localTime.localTime
-      );
-
-      if (!startDateTime) {
-        console.warn(`Failed to get datetime for ${anime.title}`);
+      const dayIndex = DAY_TO_INDEX[localTime.localDay];
+      if (dayIndex === undefined) {
+        console.warn(`Invalid local day for ${anime.title}: ${localTime.localDay}`);
         continue;
       }
-
-      // Assume 30-minute episodes
-      const endDateTime = startDateTime.plus({ minutes: 30 });
 
       // Create calendar event
       const event: CalendarEvent = {
         id: `anime-${anime.mal_id}`,
         title: anime.title_english || anime.title,
-        start: toISOString(startDateTime),
-        end: toISOString(endDateTime),
+        daysOfWeek: [dayIndex],
+        startTime: localTime.localTime,
+        duration: "00:30",
         extendedProps: {
           animeData: anime,
         },
