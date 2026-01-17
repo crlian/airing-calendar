@@ -34,6 +34,11 @@ export function AnimeCard({ anime, isSelected, onAdd, onRemove }: AnimeCardProps
             <h3 className="font-semibold text-sm line-clamp-2 mb-1">
               {displayTitle}
             </h3>
+            {anime.title && anime.title !== displayTitle && (
+              <div className="text-xs italic text-gray-500 line-clamp-1 mb-1">
+                ({anime.title})
+              </div>
+            )}
 
             <Badge variant="secondary" className="text-xs mb-2">
               {broadcastInfo}

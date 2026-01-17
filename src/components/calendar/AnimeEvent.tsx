@@ -10,7 +10,7 @@ export function AnimeEvent({ event }: AnimeEventProps) {
 
   if (!animeData) {
     return (
-      <div className="px-1 py-0.5">
+      <div className="px-2 flex items-center h-full">
         <div className="text-xs font-medium truncate">{event.title}</div>
       </div>
     );
@@ -18,14 +18,10 @@ export function AnimeEvent({ event }: AnimeEventProps) {
 
   return (
     <AnimeEventPopover anime={animeData}>
-      <div className="flex items-center gap-2 px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity h-full">
-        <img
-          src={animeData.images.jpg.small_image_url}
-          alt={event.title}
-          className="h-12 w-8 object-cover rounded border border-black/20 flex-shrink-0"
-        />
+      <div className="flex items-center gap-2 px-2 h-full cursor-pointer hover:opacity-80 transition-opacity">
+        <span className="h-2 w-2 rounded-full bg-white/80 flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-medium line-clamp-2">{event.title}</div>
+          <div className="text-xs font-medium line-clamp-1">{event.title}</div>
         </div>
       </div>
     </AnimeEventPopover>
