@@ -5,6 +5,7 @@ import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
 import type { AnimeData } from "@/types/anime";
 import { useMemo } from "react";
+import "./App.css";
 
 function App() {
   // Fetch seasonal anime
@@ -66,7 +67,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <CalendarView events={calendarEvents} />
+          <CalendarView events={calendarEvents} onRemoveAnime={removeAnime} />
         )}
       </div>
     </div>

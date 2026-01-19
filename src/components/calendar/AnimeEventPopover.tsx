@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 interface AnimeEventPopoverProps {
   anime: AnimeData;
   children: ReactNode;
+  onRemove: (id: number) => void;
 }
 
-export function AnimeEventPopover({ anime, children }: AnimeEventPopoverProps) {
+export function AnimeEventPopover({ anime, children, onRemove }: AnimeEventPopoverProps) {
   const [open, setOpen] = useState(false);
 
   const displayTitle = anime.title_english || anime.title;
@@ -75,20 +76,30 @@ export function AnimeEventPopover({ anime, children }: AnimeEventPopoverProps) {
                   <span className="font-semibold">{anime.score}</span>
                 </div>
               )}
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-white/90 hover:text-white hover:bg-white/10"
-              >
-                <a
-                  href={anime.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/90 hover:text-white hover:bg-white/10 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  onClick={() => onRemove(anime.mal_id)}
                 >
-                  Open MAL
-                </a>
-              </Button>
+                  Remove
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/90 hover:text-white hover:bg-white/10"
+                >
+                  <a
+                    href={anime.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open MAL
+                  </a>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

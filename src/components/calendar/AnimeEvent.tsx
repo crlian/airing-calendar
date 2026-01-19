@@ -3,9 +3,10 @@ import { AnimeEventPopover } from "./AnimeEventPopover";
 
 interface AnimeEventProps {
   event: EventContentArg["event"];
+  onRemove: (id: number) => void;
 }
 
-export function AnimeEvent({ event }: AnimeEventProps) {
+export function AnimeEvent({ event, onRemove }: AnimeEventProps) {
   const animeData = event.extendedProps.animeData;
 
   if (!animeData) {
@@ -17,7 +18,7 @@ export function AnimeEvent({ event }: AnimeEventProps) {
   }
 
   return (
-    <AnimeEventPopover anime={animeData}>
+    <AnimeEventPopover anime={animeData} onRemove={onRemove}>
       <div className="flex items-center gap-2 px-2 h-full cursor-pointer hover:opacity-80 transition-opacity">
         <span className="h-2 w-2 rounded-full bg-white/80 flex-shrink-0" />
         <div className="min-w-0 flex-1">
