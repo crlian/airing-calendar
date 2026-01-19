@@ -9,7 +9,7 @@ import { jikanClient } from "@/lib/api/jikan";
 interface SidebarProps {
   seasonalAnime: AnimeData[];
   selectedIds: number[];
-  onAddAnime: (id: number) => void;
+  onAddAnime: (anime: AnimeData) => void;
   onRemoveAnime: (id: number) => void;
   isSeasonalLoading: boolean;
   seasonalHasNextPage: boolean;
@@ -146,7 +146,7 @@ export function Sidebar({
                   key={anime.mal_id}
                   anime={anime}
                   isSelected={selectedIds.includes(anime.mal_id)}
-                  onAdd={() => onAddAnime(anime.mal_id)}
+                  onAdd={() => onAddAnime(anime)}
                   onRemove={() => onRemoveAnime(anime.mal_id)}
                 />
               ))}

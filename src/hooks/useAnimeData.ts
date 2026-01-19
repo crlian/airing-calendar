@@ -6,7 +6,7 @@ import { convertJSTToLocal } from "@/lib/utils/timezone";
 
 interface UseAnimeDataParams {
   selectedIds: number[];
-  seasonalAnime: AnimeData[];
+  animeList: AnimeData[];
 }
 
 interface UseAnimeDataReturn {
@@ -26,11 +26,11 @@ const DAY_TO_INDEX: Record<string, number> = {
 
 export function useAnimeData({
   selectedIds,
-  seasonalAnime,
+  animeList,
 }: UseAnimeDataParams): UseAnimeDataReturn {
   const selectedAnimeList = useMemo(() => {
-    return seasonalAnime.filter((anime) => selectedIds.includes(anime.mal_id));
-  }, [selectedIds, seasonalAnime]);
+    return animeList.filter((anime) => selectedIds.includes(anime.mal_id));
+  }, [selectedIds, animeList]);
 
   const calendarEvents = useMemo(() => {
     const events: CalendarEvent[] = [];

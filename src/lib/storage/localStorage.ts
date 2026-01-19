@@ -1,4 +1,7 @@
+import type { AnimeData } from "@/types/anime";
+
 const STORAGE_KEY = "anime-calendar:selected";
+const STORAGE_ANIME_KEY = "anime-calendar:selected-anime";
 
 export const AnimeStorage = {
   /**
@@ -23,26 +26,52 @@ export const AnimeStorage = {
   },
 
   /**
-   * Adds an anime ID to the selected list
+   * Gets the list of selected anime data from localStorage
    */
-  addAnime(id: number): void {
+  getSelectedAnime(): AnimeData[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_ANIME_KEY);
+      if (!stored) return [];
+
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) {
+        console.error("Invalid stored anime data format");
+        return [];
+      }
+
+      return parsed.filter((anime) => anime && typeof anime.mal_id === "number");
+    } catch (error) {
+      console.error("Error reading selected anime from localStorage:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Adds an anime to the selected list and caches its data
+   */
+  addAnime(anime: AnimeData): void {
     try {
       const currentIds = this.getSelectedIds();
 
       // Don't add duplicates
-      if (currentIds.includes(id)) {
-        return;
+      if (!currentIds.includes(anime.mal_id)) {
+        const updatedIds = [...currentIds, anime.mal_id];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedIds));
       }
 
-      const updatedIds = [...currentIds, id];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedIds));
+      const currentAnime = this.getSelectedAnime();
+      const exists = currentAnime.some((item) => item.mal_id === anime.mal_id);
+      if (exists) return;
+
+      const updatedAnime = [...currentAnime, anime];
+      localStorage.setItem(STORAGE_ANIME_KEY, JSON.stringify(updatedAnime));
     } catch (error) {
       console.error("Error adding anime to localStorage:", error);
     }
   },
 
   /**
-   * Removes an anime ID from the selected list
+   * Removes an anime ID from the selected list and cached data
    */
   removeAnime(id: number): void {
     try {
@@ -50,6 +79,10 @@ export const AnimeStorage = {
       const updatedIds = currentIds.filter((currentId) => currentId !== id);
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedIds));
+
+      const currentAnime = this.getSelectedAnime();
+      const updatedAnime = currentAnime.filter((anime) => anime.mal_id !== id);
+      localStorage.setItem(STORAGE_ANIME_KEY, JSON.stringify(updatedAnime));
     } catch (error) {
       console.error("Error removing anime from localStorage:", error);
     }
@@ -69,6 +102,7 @@ export const AnimeStorage = {
   clear(): void {
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_ANIME_KEY);
     } catch (error) {
       console.error("Error clearing localStorage:", error);
     }

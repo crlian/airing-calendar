@@ -28,7 +28,7 @@ export function SearchBar({ onSearch, isLoading }: SearchBarProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="pl-9"
-        disabled={isLoading}
+        aria-busy={isLoading}
       />
     </div>
   );

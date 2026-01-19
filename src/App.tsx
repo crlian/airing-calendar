@@ -3,6 +3,8 @@ import { CalendarView } from "@/components/calendar/CalendarView";
 import { useSeasonalAnime } from "@/hooks/useSeasonalAnime";
 import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
+import type { AnimeData } from "@/types/anime";
+import { useMemo } from "react";
 
 function App() {
   // Fetch seasonal anime
@@ -17,12 +19,19 @@ function App() {
   } = useSeasonalAnime();
 
   // Manage selected anime
-  const { selectedIds, addAnime, removeAnime } = useSelectedAnime();
+  const { selectedIds, selectedAnime, addAnime, removeAnime } = useSelectedAnime();
+
+  const availableAnime = useMemo(() => {
+    const map = new Map<number, AnimeData>();
+    seasonalAnime.forEach((anime) => map.set(anime.mal_id, anime));
+    selectedAnime.forEach((anime) => map.set(anime.mal_id, anime));
+    return Array.from(map.values());
+  }, [seasonalAnime, selectedAnime]);
 
   // Transform to calendar events
   const { calendarEvents } = useAnimeData({
     selectedIds,
-    seasonalAnime,
+    animeList: availableAnime,
   });
 
   return (
