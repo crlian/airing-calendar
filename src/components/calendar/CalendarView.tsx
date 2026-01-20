@@ -19,7 +19,13 @@ const padHour = (value: number) => value.toString().padStart(2, "0");
 export function CalendarView({ events, onRemoveAnime, preferences }: CalendarViewProps) {
   const renderEventContent = useCallback(
     (arg: EventContentArg) => {
-      return <AnimeEvent event={arg.event} onRemove={onRemoveAnime} />;
+      return (
+        <AnimeEvent
+          event={arg.event}
+          timeText={arg.timeText}
+          onRemove={onRemoveAnime}
+        />
+      );
     },
     [onRemoveAnime]
   );

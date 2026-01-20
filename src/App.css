@@ -1,33 +1,53 @@
 /* App-specific styles */
 .fc,
 .fc * {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+.fc {
+  background: #ffffff;
 }
 
 .fc .fc-scrollgrid,
 .fc .fc-scrollgrid-section > *,
 .fc .fc-timegrid-slot,
 .fc .fc-col-header-cell {
-  border-color: rgba(17, 24, 39, 0.08);
+  border-color: rgba(15, 23, 42, 0.06);
 }
 
 .fc .fc-timegrid-slot-minor {
   border-top-style: dotted;
-  border-top-color: rgba(17, 24, 39, 0.06);
+  border-top-color: rgba(15, 23, 42, 0.04);
 }
 
 .fc .fc-timegrid-col.fc-day-today {
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(30, 58, 138, 0.05);
 }
 
 .fc .fc-now-indicator-line {
-  border-top: 2px solid #ef4444;
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.12);
+  border-top: 2px solid #dc2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.12);
+  position: relative;
 }
 
 .fc .fc-now-indicator-arrow {
-  border-left-color: #ef4444;
-  border-right-color: #ef4444;
+  border-left-color: #dc2626;
+  border-right-color: #dc2626;
+}
+
+.fc .fc-now-indicator-line::after {
+  content: "Now";
+  position: absolute;
+  left: 8px;
+  top: -12px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  box-shadow: 0 6px 12px rgba(220, 38, 38, 0.18);
 }
 
 .fc .fc-toolbar-title {
@@ -44,49 +64,49 @@
 .fc .fc-toolbar-chunk:nth-child(2)::before {
   content: "This week";
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.015em;
-  color: #111827;
+  color: #0f172a;
 }
 
 .fc .fc-button {
-  border-radius: 12px;
-  padding: 8px 12px;
-  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 999px;
+  padding: 6px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
   background: #fff;
-  color: #111827;
+  color: #0f172a;
   box-shadow: none;
 }
 
 .fc .fc-button:hover {
-  background: rgba(17, 24, 39, 0.04);
+  background: rgba(15, 23, 42, 0.04);
 }
 
 .fc .fc-button-primary:hover,
 .fc .fc-button-primary:focus,
 .fc .fc-button-primary:focus-visible {
-  background: rgba(17, 24, 39, 0.08);
-  color: #111827;
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
 }
 
 .fc .fc-button-primary {
-  border-color: rgba(17, 24, 39, 0.12);
+  border-color: rgba(15, 23, 42, 0.12);
   background: #fff;
-  color: #111827;
+  color: #0f172a;
 }
 
 .fc .fc-button.fc-today-button {
-  border-color: rgba(59, 130, 246, 0.3);
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
+  border-color: rgba(30, 58, 138, 0.2);
+  background: rgba(30, 58, 138, 0.08);
+  color: #1e3a8a;
 }
 
 .fc .fc-button.fc-today-button:hover,
 .fc .fc-button.fc-today-button:focus,
 .fc .fc-button.fc-today-button:focus-visible {
-  background: rgba(59, 130, 246, 0.18);
-  color: #1d4ed8;
+  background: rgba(30, 58, 138, 0.14);
+  color: #1e3a8a;
 }
 
 .fc .fc-button:disabled {
@@ -95,19 +115,55 @@
 
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active {
-  background: rgba(17, 24, 39, 0.06);
-  border-color: rgba(17, 24, 39, 0.14);
-  color: #111827;
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.14);
+  color: #0f172a;
 }
 
 .fc .fc-timegrid-axis-cushion {
-  font-size: 12px;
-  color: rgba(17, 24, 39, 0.6);
-  font-weight: 500;
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.75);
+  font-weight: 700;
+  font-family: "Playfair Display", serif !important;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .fc .fc-col-header-cell-cushion {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(17, 24, 39, 0.75);
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.fc .fc-timegrid-event,
+.fc .fc-daygrid-event {
+  background: transparent;
+  border: none;
+}
+
+.fc .fc-event .fc-event-main {
+  color: #0f172a;
+}
+
+.fc .fc-list-event {
+  background: #fff;
+}
+
+.fc .fc-list-event td {
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+.anime-event-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.anime-event-dot {
+  background: #1e3a8a;
+}
+
+.anime-event-time {
+  color: rgba(15, 23, 42, 0.6);
 }
