@@ -30,3 +30,6 @@ dist-ssr
 # Temp files
 /tmp
 *.tmp
+
+# Tooling
+.playwright-mcp/

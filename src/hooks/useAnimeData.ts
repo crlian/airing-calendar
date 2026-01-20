@@ -28,9 +28,15 @@ export function useAnimeData({
   selectedIds,
   animeList,
 }: UseAnimeDataParams): UseAnimeDataReturn {
+  const animeById = useMemo(() => {
+    return new Map(animeList.map((anime) => [anime.mal_id, anime]));
+  }, [animeList]);
+
   const selectedAnimeList = useMemo(() => {
-    return animeList.filter((anime) => selectedIds.includes(anime.mal_id));
-  }, [selectedIds, animeList]);
+    return selectedIds
+      .map((id) => animeById.get(id))
+      .filter((anime): anime is AnimeData => Boolean(anime));
+  }, [selectedIds, animeById]);
 
   const calendarEvents = useMemo(() => {
     const events: CalendarEvent[] = [];
@@ -71,6 +77,9 @@ export function useAnimeData({
         duration: "00:30",
         extendedProps: {
           animeData: anime,
+          localDay: localTime.localDay,
+          localTime: localTime.localTime,
+          nextOccurrence: localTime.localDatetime,
         },
       };
 

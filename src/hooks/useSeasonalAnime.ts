@@ -10,6 +10,7 @@ interface UseSeasonalAnimeReturn {
   currentPage: number;
   totalPages: number;
   isLoadingMore: boolean;
+  loadMoreError: string | null;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -22,11 +23,13 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
   const fetchData = async (page: number = 1) => {
     try {
       setIsLoading(true);
       setError(null);
+      setLoadMoreError(null);
 
       const result: SearchAnimeResult = await jikanClient.getSeasonNow(page);
       if (page === 1) {
@@ -49,6 +52,7 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
     if (!hasNextPage || isLoadingMore) return;
 
     setIsLoadingMore(true);
+    setLoadMoreError(null);
     const nextPage = currentPage + 1;
 
     try {
@@ -58,6 +62,7 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
       setHasNextPage(result.pagination.hasNextPage);
     } catch (err) {
       console.error("Error loading more seasonal anime:", err);
+      setLoadMoreError("Failed to load more seasonal anime.");
     } finally {
       setIsLoadingMore(false);
     }
@@ -75,6 +80,7 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
     currentPage,
     totalPages,
     isLoadingMore,
+    loadMoreError,
     loadMore,
     refetch: () => fetchData(1),
   };

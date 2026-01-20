@@ -3,6 +3,7 @@ import { CalendarView } from "@/components/calendar/CalendarView";
 import { useSeasonalAnime } from "@/hooks/useSeasonalAnime";
 import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
+import { useCalendarPreferences } from "@/hooks/useCalendarPreferences";
 import type { AnimeData } from "@/types/anime";
 import { useMemo } from "react";
 import "./App.css";
@@ -12,15 +13,19 @@ function App() {
   const {
     data: seasonalAnime,
     isLoading: isSeasonalLoading,
+    error: seasonalError,
     hasNextPage: seasonalHasNextPage,
     currentPage: seasonalCurrentPage,
     totalPages: seasonalTotalPages,
     isLoadingMore: seasonalIsLoadingMore,
+    loadMoreError: seasonalLoadMoreError,
     loadMore: loadMoreSeasonal,
+    refetch: refetchSeasonal,
   } = useSeasonalAnime();
 
   // Manage selected anime
   const { selectedIds, selectedAnime, addAnime, removeAnime } = useSelectedAnime();
+  const { preferences, updatePreferences } = useCalendarPreferences();
 
   const availableAnime = useMemo(() => {
     const map = new Map<number, AnimeData>();
@@ -44,11 +49,16 @@ function App() {
           selectedIds={selectedIds}
           onAddAnime={addAnime}
           onRemoveAnime={removeAnime}
+          calendarPreferences={preferences}
+          onCalendarPreferencesChange={updatePreferences}
+          seasonalError={seasonalError ? seasonalError.message : null}
+          onRetrySeasonal={refetchSeasonal}
           isSeasonalLoading={isSeasonalLoading}
           seasonalHasNextPage={seasonalHasNextPage}
           seasonalCurrentPage={seasonalCurrentPage}
           seasonalTotalPages={seasonalTotalPages}
           seasonalIsLoadingMore={seasonalIsLoadingMore}
+          seasonalLoadMoreError={seasonalLoadMoreError}
           onLoadMoreSeasonal={loadMoreSeasonal}
         />
       </div>
@@ -67,7 +77,11 @@ function App() {
             </div>
           </div>
         ) : (
-          <CalendarView events={calendarEvents} onRemoveAnime={removeAnime} />
+          <CalendarView
+            events={calendarEvents}
+            onRemoveAnime={removeAnime}
+            preferences={preferences}
+          />
         )}
       </div>
     </div>

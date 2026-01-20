@@ -11,6 +11,9 @@ export interface CalendarEvent {
   duration?: string; // HH:mm or HH:mm:ss
   extendedProps: {
     animeData: AnimeData;
+    localDay?: string;
+    localTime?: string;
+    nextOccurrence?: Date;
   };
 }
 

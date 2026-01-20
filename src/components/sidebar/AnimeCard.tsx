@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { AnimeData } from "@/types/anime";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,11 +8,11 @@ import { Check, Plus } from "lucide-react";
 interface AnimeCardProps {
   anime: AnimeData;
   isSelected: boolean;
-  onAdd: () => void;
-  onRemove: () => void;
+  onAddAnime: (anime: AnimeData) => void;
+  onRemoveAnime: (id: number) => void;
 }
 
-export function AnimeCard({ anime, isSelected, onAdd, onRemove }: AnimeCardProps) {
+function AnimeCardComponent({ anime, isSelected, onAddAnime, onRemoveAnime }: AnimeCardProps) {
   const displayTitle = anime.title_english || anime.title;
   const broadcastInfo = anime.broadcast?.string || "No broadcast info";
 
@@ -56,7 +57,7 @@ export function AnimeCard({ anime, isSelected, onAdd, onRemove }: AnimeCardProps
                 size="sm"
                 variant="outline"
                 className="w-full"
-                onClick={onRemove}
+                onClick={() => onRemoveAnime(anime.mal_id)}
               >
                 <Check className="h-4 w-4 mr-1" />
                 Added
@@ -66,7 +67,7 @@ export function AnimeCard({ anime, isSelected, onAdd, onRemove }: AnimeCardProps
                 size="sm"
                 variant="default"
                 className="w-full"
-                onClick={onAdd}
+                onClick={() => onAddAnime(anime)}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add
@@ -78,3 +79,5 @@ export function AnimeCard({ anime, isSelected, onAdd, onRemove }: AnimeCardProps
     </Card>
   );
 }
+
+export const AnimeCard = memo(AnimeCardComponent);

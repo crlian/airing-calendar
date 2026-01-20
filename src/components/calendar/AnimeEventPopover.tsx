@@ -1,17 +1,39 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { AnimeData } from "@/types/anime";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { DateTime } from "luxon";
 
 interface AnimeEventPopoverProps {
   anime: AnimeData;
   children: ReactNode;
+  nextOccurrence?: Date;
   onRemove: (id: number) => void;
 }
 
-export function AnimeEventPopover({ anime, children, onRemove }: AnimeEventPopoverProps) {
+export function AnimeEventPopover({
+  anime,
+  children,
+  nextOccurrence,
+  onRemove,
+}: AnimeEventPopoverProps) {
   const [open, setOpen] = useState(false);
+  const closeTimeoutRef = useRef<number | null>(null);
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current !== null) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleClose = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setOpen(false);
+    }, 50);
+  };
 
   const displayTitle = anime.title_english || anime.title;
   const synopsis = anime.synopsis
@@ -28,21 +50,30 @@ export function AnimeEventPopover({ anime, children, onRemove }: AnimeEventPopov
     const normalizedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
     return `${normalizedDay} • ${time} ${tz}`;
   })();
+  const nextEpisodeLabel = nextOccurrence
+    ? DateTime.fromJSDate(nextOccurrence).toFormat("ccc, LLL dd • HH:mm")
+    : null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onMouseEnter={() => {
+            clearCloseTimeout();
+            setOpen(true);
+          }}
+          onMouseLeave={scheduleClose}
         >
           {children}
         </div>
       </PopoverTrigger>
       <PopoverContent
         className="w-80 p-0 overflow-hidden"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={() => {
+          clearCloseTimeout();
+          setOpen(true);
+        }}
+        onMouseLeave={scheduleClose}
       >
         <div className="relative h-[360px]">
           <img
@@ -61,6 +92,11 @@ export function AnimeEventPopover({ anime, children, onRemove }: AnimeEventPopov
               {broadcastLabel && (
                 <div className="text-xs text-white/85">
                   {broadcastLabel}
+                </div>
+              )}
+              {nextEpisodeLabel && (
+                <div className="text-xs text-white/85">
+                  Next episode • {nextEpisodeLabel}
                 </div>
               )}
             </div>
