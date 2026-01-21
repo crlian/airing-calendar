@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo, useRef, useTransition } from "react";
+import { useState, useCallback, useMemo, useRef, useTransition, useEffect } from "react";
 import type { AnimeData, SearchAnimeResult } from "@/types/anime";
 import { SearchBar } from "./SearchBar";
 import { AnimeCard } from "./AnimeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { jikanClient } from "@/lib/api/jikan";
+import { jikanClient, JikanRateLimitError } from "@/lib/api/jikan";
 import type { CalendarPreferences } from "@/types/preferences";
 
 interface SidebarProps {
@@ -24,6 +24,59 @@ interface SidebarProps {
   seasonalLoadMoreError: string | null;
   onLoadMoreSeasonal: () => Promise<void>;
 }
+
+const SEARCH_CACHE_KEY = "anime-calendar:search-cache";
+const SEARCH_CACHE_DURATION = 10 * 60 * 1000;
+const SEARCH_CACHE_MAX_ENTRIES = 30;
+
+type SearchCacheEntry = SearchAnimeResult & {
+  timestamp: number;
+};
+
+const loadSearchCache = (): Map<string, SearchCacheEntry> => {
+  try {
+    const stored = localStorage.getItem(SEARCH_CACHE_KEY);
+    if (!stored) return new Map();
+    const parsed = JSON.parse(stored) as Record<string, SearchCacheEntry>;
+    if (!parsed || typeof parsed !== "object") return new Map();
+    const now = Date.now();
+    const entries = Object.entries(parsed)
+      .filter(([, entry]) => now - entry.timestamp <= SEARCH_CACHE_DURATION)
+      .sort((a, b) => b[1].timestamp - a[1].timestamp)
+      .slice(0, SEARCH_CACHE_MAX_ENTRIES);
+    return new Map(entries);
+  } catch (error) {
+    console.error("Failed to load search cache:", error);
+    return new Map();
+  }
+};
+
+const persistSearchCache = (cache: Map<string, SearchCacheEntry>): void => {
+  try {
+    const serialized: Record<string, SearchCacheEntry> = {};
+    cache.forEach((entry, key) => {
+      serialized[key] = entry;
+    });
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(serialized));
+  } catch (error) {
+    console.error("Failed to save search cache:", error);
+  }
+};
+
+const getValidSearchCache = (
+  cache: Map<string, SearchCacheEntry>,
+  key: string
+): SearchCacheEntry | null => {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  const isExpired = Date.now() - entry.timestamp > SEARCH_CACHE_DURATION;
+  if (isExpired) {
+    cache.delete(key);
+    persistSearchCache(cache);
+    return null;
+  }
+  return entry;
+};
 
 export function Sidebar({
   seasonalAnime,
@@ -47,7 +100,11 @@ export function Sidebar({
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const searchCacheRef = useRef<Map<string, SearchAnimeResult>>(new Map());
+  const searchCacheRef = useRef<Map<string, SearchCacheEntry>>(new Map());
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [startHourInput, setStartHourInput] = useState(
+    () => `${calendarPreferences.startHour}`
+  );
 
   // Pagination state
   const [currentQuery, setCurrentQuery] = useState("");
@@ -115,7 +172,7 @@ export function Sidebar({
     // Phase 2: If no local results, search the API (background, non-blocking)
     if (localResults.length === 0) {
       const cacheKey = `${query.toLowerCase()}|1`;
-      const cached = searchCacheRef.current.get(cacheKey);
+      const cached = getValidSearchCache(searchCacheRef.current, cacheKey);
       if (cached) {
         setSearchResults(cached.data);
         setHasNextPage(cached.pagination.hasNextPage);
@@ -126,7 +183,11 @@ export function Sidebar({
 
       startTransition(() => {
         jikanClient.searchAnime(query, 1).then((result) => {
-          searchCacheRef.current.set(cacheKey, result);
+          searchCacheRef.current.set(cacheKey, {
+            ...result,
+            timestamp: Date.now(),
+          });
+          persistSearchCache(searchCacheRef.current);
           setSearchResults(result.data);
           setHasNextPage(result.pagination.hasNextPage);
           setTotalPages(result.pagination.lastVisiblePage);
@@ -137,7 +198,11 @@ export function Sidebar({
           setHasNextPage(false);
           setTotalPages(1);
           setIsSearching(false);
-          setSearchError("Search failed. Try again.");
+          setSearchError(
+            error instanceof JikanRateLimitError
+              ? error.message
+              : "Search failed. Try again."
+          );
         });
       });
     }
@@ -145,6 +210,14 @@ export function Sidebar({
       setIsSearching(false);
     }
   }, [seasonalSearchIndex]);
+
+  useEffect(() => {
+    setStartHourInput(`${calendarPreferences.startHour}`);
+  }, [calendarPreferences.startHour]);
+
+  useEffect(() => {
+    searchCacheRef.current = loadSearchCache();
+  }, []);
 
   const handleLoadMore = useCallback(async () => {
     if (!hasNextPage || isLoadingMore || !currentQuery) return;
@@ -155,10 +228,14 @@ export function Sidebar({
 
     try {
       const cacheKey = `${currentQuery.toLowerCase()}|${nextPage}`;
-      const cached = searchCacheRef.current.get(cacheKey);
+      const cached = getValidSearchCache(searchCacheRef.current, cacheKey);
       const result = cached ?? await jikanClient.searchAnime(currentQuery, nextPage);
       if (!cached) {
-        searchCacheRef.current.set(cacheKey, result);
+        searchCacheRef.current.set(cacheKey, {
+          ...result,
+          timestamp: Date.now(),
+        });
+        persistSearchCache(searchCacheRef.current);
       }
 
       // Append results, do not replace
@@ -167,7 +244,11 @@ export function Sidebar({
       setHasNextPage(result.pagination.hasNextPage);
     } catch (error) {
       console.error("Load more failed:", error);
-      setSearchError("Failed to load more results.");
+      setSearchError(
+        error instanceof JikanRateLimitError
+          ? error.message
+          : "Failed to load more results."
+      );
     } finally {
       setIsLoadingMore(false);
     }
@@ -183,9 +264,31 @@ export function Sidebar({
     <div className="flex flex-col h-screen border-r border-black bg-white">
       {/* Header */}
       <div className="p-4 border-b border-black">
-        <h1 className="text-2xl font-bold font-display mb-4">
-          Anime Calendar
-        </h1>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h1 className="text-2xl font-bold font-display">Anime Calendar</h1>
+          <button
+            type="button"
+            className="text-xs font-medium text-gray-600 underline underline-offset-4"
+            onClick={() => setShowHowItWorks((prev) => !prev)}
+            aria-expanded={showHowItWorks}
+            aria-controls="how-it-works"
+          >
+            How it works
+          </button>
+        </div>
+        {showHowItWorks && (
+          <div
+            id="how-it-works"
+            className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+          >
+            <p className="font-medium text-gray-700">Quick steps</p>
+            <ol className="mt-2 space-y-1">
+              <li>1. Search or browse the seasonal list.</li>
+              <li>2. Tap Add to include a show.</li>
+              <li>3. Check the calendar for local air times.</li>
+            </ol>
+          </div>
+        )}
         <SearchBar onSearch={handleSearch} isLoading={isPending} />
         <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-gray-600">
           <label className="flex flex-col gap-1">
@@ -235,12 +338,31 @@ export function Sidebar({
               type="number"
               min={0}
               max={23}
-              value={calendarPreferences.startHour}
+              value={startHourInput}
               onChange={(event) => {
-                const value = Number(event.target.value);
-                if (Number.isNaN(value)) return;
-                const clamped = Math.min(23, Math.max(0, value));
+                const { value } = event.target;
+                setStartHourInput(value);
+                if (value.trim() === "") return;
+                const parsed = Number(value);
+                if (Number.isNaN(parsed)) return;
+                const clamped = Math.min(23, Math.max(0, parsed));
                 onCalendarPreferencesChange({ startHour: clamped });
+              }}
+              onBlur={() => {
+                if (startHourInput.trim() === "") {
+                  setStartHourInput(`${calendarPreferences.startHour}`);
+                  return;
+                }
+                const parsed = Number(startHourInput);
+                if (Number.isNaN(parsed)) {
+                  setStartHourInput(`${calendarPreferences.startHour}`);
+                  return;
+                }
+                const clamped = Math.min(23, Math.max(0, parsed));
+                if (clamped !== calendarPreferences.startHour) {
+                  onCalendarPreferencesChange({ startHour: clamped });
+                }
+                setStartHourInput(`${clamped}`);
               }}
               className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800"
             />
@@ -346,7 +468,10 @@ export function Sidebar({
 
       {/* Footer */}
       <div className="p-4 border-t border-black text-xs text-gray-600">
-        {selectedIds.length} anime selected
+        <div>{selectedIds.length} anime selected</div>
+        <div className="mt-2 text-[11px] text-gray-500">
+          Data via Jikan (unofficial MAL API). Not affiliated with MyAnimeList.
+        </div>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
 import { useCalendarPreferences } from "@/hooks/useCalendarPreferences";
 import type { AnimeData } from "@/types/anime";
-import { Suspense, lazy, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 import "./App.css";
 
 const CalendarView = lazy(() =>
@@ -14,6 +14,9 @@ const CalendarView = lazy(() =>
 );
 
 function App() {
+  useEffect(() => {
+    import("@/components/calendar/CalendarView");
+  }, []);
   // Fetch seasonal anime
   const {
     data: seasonalAnime,
@@ -76,9 +79,14 @@ function App() {
               <h2 className="text-2xl font-display font-semibold mb-2">
                 Welcome to Anime Calendar
               </h2>
-              <p className="text-lg">
+              <p className="text-lg mb-4">
                 Search for anime and add them to your calendar to get started
               </p>
+              <ol className="text-sm text-gray-500 space-y-1">
+                <li>1. Browse seasonal anime or search by title.</li>
+                <li>2. Click Add to include it in your schedule.</li>
+                <li>3. See the weekly airings in your time zone.</li>
+              </ol>
             </div>
           </div>
         ) : (

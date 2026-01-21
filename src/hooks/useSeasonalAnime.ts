@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { AnimeData, SearchAnimeResult } from "@/types/anime";
-import { jikanClient } from "@/lib/api/jikan";
+import { jikanClient, JikanRateLimitError } from "@/lib/api/jikan";
 
 interface UseSeasonalAnimeReturn {
   data: AnimeData[];
@@ -25,6 +25,13 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    if (err instanceof JikanRateLimitError) {
+      return err.message;
+    }
+    return fallback;
+  };
+
   const fetchData = async (page: number = 1) => {
     try {
       setIsLoading(true);
@@ -41,7 +48,8 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
       setHasNextPage(result.pagination.hasNextPage);
       setTotalPages(result.pagination.lastVisiblePage);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch seasonal anime"));
+      const message = getErrorMessage(err, "Failed to fetch seasonal anime");
+      setError(new Error(message));
       console.error("Error fetching seasonal anime:", err);
     } finally {
       setIsLoading(false);
@@ -62,7 +70,7 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
       setHasNextPage(result.pagination.hasNextPage);
     } catch (err) {
       console.error("Error loading more seasonal anime:", err);
-      setLoadMoreError("Failed to load more seasonal anime.");
+      setLoadMoreError(getErrorMessage(err, "Failed to load more seasonal anime."));
     } finally {
       setIsLoadingMore(false);
     }

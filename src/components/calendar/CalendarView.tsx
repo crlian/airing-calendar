@@ -5,7 +5,7 @@ import type { CalendarEvent } from "@/types/calendar";
 import type { CalendarPreferences } from "@/types/preferences";
 import type { EventContentArg } from "@fullcalendar/core";
 import { AnimeEvent } from "./AnimeEvent";
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { DateTime } from "luxon";
 
 interface CalendarViewProps {
@@ -17,6 +17,7 @@ interface CalendarViewProps {
 const padHour = (value: number) => value.toString().padStart(2, "0");
 
 export function CalendarView({ events, onRemoveAnime, preferences }: CalendarViewProps) {
+  const calendarRef = useRef<FullCalendar | null>(null);
   const renderEventContent = useCallback(
     (arg: EventContentArg) => {
       return (
@@ -32,6 +33,17 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
   );
   const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const offsetLabel = DateTime.now().setZone(localTimeZone).toFormat("ZZ");
+  const startTime = useMemo(
+    () => `${padHour(preferences.startHour)}:00:00`,
+    [preferences.startHour]
+  );
+
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+    calendarApi.setOption("slotMinTime", startTime);
+    calendarApi.setOption("scrollTime", startTime);
+  }, [startTime]);
 
   return (
     <div className="h-full p-4 flex flex-col">
@@ -40,6 +52,7 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
       </div>
       <div className="flex-1 min-h-0">
         <FullCalendar
+          ref={calendarRef}
           plugins={[timeGridPlugin, listPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
@@ -52,7 +65,7 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
           weekends={true}
           firstDay={preferences.weekStart}
           allDaySlot={false}
-          slotMinTime="00:00:00"
+          slotMinTime={startTime}
           slotMaxTime="24:00:00"
           slotDuration="00:30:00"
           slotLabelInterval="01:00"
@@ -64,7 +77,7 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
             minute: "2-digit",
             hour12: preferences.timeFormat === "12h",
           }}
-          scrollTime={`${padHour(preferences.startHour)}:00:00`}
+          scrollTime={startTime}
           dayHeaderFormat={{
             weekday: "short",
             day: "2-digit",

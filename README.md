@@ -24,3 +24,7 @@ Early version – personal project built for daily use.
 
 ## Data Source
 - Jikan API (MyAnimeList)
+
+## Attribution & Disclaimer
+- Data provided by Jikan API (unofficial MyAnimeList API).
+- This project is not affiliated with or endorsed by MyAnimeList or Jikan.
