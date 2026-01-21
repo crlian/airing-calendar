@@ -261,7 +261,7 @@ export function Sidebar({
   const showSearchError = hasSearched && searchError;
 
   return (
-    <div className="flex flex-col h-screen border-r border-black bg-white">
+    <div className="flex flex-col min-h-[60vh] border-b border-black bg-white lg:h-screen lg:border-b-0 lg:border-r">
       {/* Header */}
       <div className="p-4 border-b border-black">
         <div className="flex items-center justify-between gap-3 mb-4">

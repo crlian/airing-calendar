@@ -49,9 +49,9 @@ function App() {
   });
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen flex-col overflow-y-auto lg:h-screen lg:flex-row lg:overflow-hidden">
       {/* Sidebar */}
-      <div className="w-[400px] flex-shrink-0">
+      <div className="w-full lg:w-[400px] lg:flex-shrink-0">
         <Sidebar
           seasonalAnime={seasonalAnime}
           selectedIds={selectedIds}
@@ -72,7 +72,7 @@ function App() {
       </div>
 
       {/* Calendar */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-[60vh] lg:min-h-0">
         {selectedIds.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-600">
             <div className="text-center">
