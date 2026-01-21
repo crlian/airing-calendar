@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://airing-calendar.vercel.app/sitemap.xml
+Sitemap: https://aniseason.com/sitemap.xml

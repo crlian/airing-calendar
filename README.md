@@ -1,17 +1,17 @@
-# Airing Calendar
+# AniSeason
 
-A small personal utility to visualize scheduled media releases
-in a weekly calendar, adjusted to your local timezone.
+AniSeason is a weekly calendar for seasonal anime releases, localized to your
+timezone. It lets you browse or search anime and build a personal airing
+schedule.
 
-The current implementation focuses on seasonal anime releases
-using data from MyAnimeList.
+## Live Site
+https://aniseason.com
 
 ## Features
 - Weekly time-grid calendar
-- Seasonal release data
+- Seasonal release data and search
 - Automatic timezone conversion
-- Poster-based calendar events
-- Hover details with additional information
+- Poster-based events with hover details
 
 ## Tech Stack
 - React + Vite
@@ -19,12 +19,29 @@ using data from MyAnimeList.
 - FullCalendar (timeGridWeek)
 - Luxon (timezone handling)
 
-## Status
-Early version – personal project built for daily use.
+## Development
 
-## Data Source
-- Jikan API (MyAnimeList)
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the dev server:
+
+```bash
+npm run dev
+```
+
+Build for production:
+
+```bash
+npm run build
+```
 
 ## Attribution & Disclaimer
 - Data provided by Jikan API (unofficial MyAnimeList API).
 - This project is not affiliated with or endorsed by MyAnimeList or Jikan.
+
+## License
+MIT. See `LICENSE`.
