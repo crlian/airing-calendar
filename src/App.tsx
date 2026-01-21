@@ -1,12 +1,17 @@
 import { Sidebar } from "@/components/sidebar/Sidebar";
-import { CalendarView } from "@/components/calendar/CalendarView";
 import { useSeasonalAnime } from "@/hooks/useSeasonalAnime";
 import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
 import { useCalendarPreferences } from "@/hooks/useCalendarPreferences";
 import type { AnimeData } from "@/types/anime";
-import { useMemo } from "react";
+import { Suspense, lazy, useMemo } from "react";
 import "./App.css";
+
+const CalendarView = lazy(() =>
+  import("@/components/calendar/CalendarView").then((module) => ({
+    default: module.CalendarView,
+  }))
+);
 
 function App() {
   // Fetch seasonal anime
@@ -77,11 +82,13 @@ function App() {
             </div>
           </div>
         ) : (
-          <CalendarView
-            events={calendarEvents}
-            onRemoveAnime={removeAnime}
-            preferences={preferences}
-          />
+          <Suspense fallback={<span className="sr-only">Loading calendar...</span>}>
+            <CalendarView
+              events={calendarEvents}
+              onRemoveAnime={removeAnime}
+              preferences={preferences}
+            />
+          </Suspense>
         )}
       </div>
     </div>
