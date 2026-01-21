@@ -77,7 +77,7 @@ function App() {
           <div className="flex items-center justify-center h-full text-gray-600">
             <div className="text-center">
               <h2 className="text-2xl font-display font-semibold mb-2">
-                Welcome to Anime Calendar
+                Welcome to Anime Season
               </h2>
               <p className="text-lg mb-4">
                 Search for anime and add them to your calendar to get started

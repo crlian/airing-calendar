@@ -265,7 +265,7 @@ export function Sidebar({
       {/* Header */}
       <div className="p-4 border-b border-black">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h1 className="text-2xl font-bold font-display">Anime Calendar</h1>
+          <h1 className="text-2xl font-bold font-display">Anime Season</h1>
           <button
             type="button"
             className="text-xs font-medium text-gray-600 underline underline-offset-4"
