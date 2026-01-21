@@ -266,15 +266,34 @@ export function Sidebar({
       <div className="p-4 border-b border-black">
         <div className="flex items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl font-bold font-display">Anime Season</h1>
-          <button
-            type="button"
-            className="text-xs font-medium text-gray-600 underline underline-offset-4"
-            onClick={() => setShowHowItWorks((prev) => !prev)}
-            aria-expanded={showHowItWorks}
-            aria-controls="how-it-works"
-          >
-            How it works
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://github.com/crlian/airing-calendar"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 transition hover:border-black hover:text-black"
+              aria-label="View the project on GitHub"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-3.5 w-3.5"
+                fill="currentColor"
+              >
+                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.483 0-.238-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.455-1.157-1.111-1.466-1.111-1.466-.908-.62.069-.607.069-.607 1.004.071 1.532 1.032 1.532 1.032.892 1.529 2.341 1.087 2.91.832.091-.647.35-1.087.636-1.337-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.57 9.57 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.698 1.028 1.591 1.028 2.682 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .268.18.58.688.481A10.02 10.02 0 0 0 22 12c0-5.523-4.477-10-10-10z" />
+              </svg>
+              GitHub
+            </a>
+            <button
+              type="button"
+              className="text-xs font-medium text-gray-600 underline underline-offset-4"
+              onClick={() => setShowHowItWorks((prev) => !prev)}
+              aria-expanded={showHowItWorks}
+              aria-controls="how-it-works"
+            >
+              How it works
+            </button>
+          </div>
         </div>
         {showHowItWorks && (
           <div
