@@ -49,7 +49,6 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
           }}
           buttonText={{ today: "Today", timeGridWeek: "Week", listWeek: "List" }}
           nowIndicator={true}
-          scrollTime="08:00:00"
           weekends={true}
           firstDay={preferences.weekStart}
           allDaySlot={false}
