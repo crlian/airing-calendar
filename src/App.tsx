@@ -4,7 +4,7 @@ import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
 import { useCalendarPreferences } from "@/hooks/useCalendarPreferences";
 import type { AnimeData } from "@/types/anime";
-import { Suspense, lazy, useEffect, useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 const CalendarView = lazy(() =>
@@ -14,6 +14,7 @@ const CalendarView = lazy(() =>
 );
 
 function App() {
+  const [mobileTab, setMobileTab] = useState<"calendar" | "browse">("calendar");
   useEffect(() => {
     import("@/components/calendar/CalendarView");
   }, []);
@@ -49,9 +50,37 @@ function App() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col overflow-y-auto lg:h-screen lg:flex-row lg:overflow-hidden">
+    <div className="flex min-h-screen flex-col lg:h-screen lg:flex-row">
+      <div className="flex items-center gap-2 border-b border-black bg-white px-4 py-3 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab("calendar")}
+          className={`flex-1 rounded-md border px-3 py-2 text-sm font-semibold transition ${
+            mobileTab === "calendar"
+              ? "border-black bg-black text-white"
+              : "border-gray-200 bg-white text-gray-700"
+          }`}
+        >
+          Calendar
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("browse")}
+          className={`flex-1 rounded-md border px-3 py-2 text-sm font-semibold transition ${
+            mobileTab === "browse"
+              ? "border-black bg-black text-white"
+              : "border-gray-200 bg-white text-gray-700"
+          }`}
+        >
+          Browse
+        </button>
+      </div>
       {/* Sidebar */}
-      <div className="w-full lg:w-[400px] lg:flex-shrink-0">
+      <div
+        className={`order-2 w-full lg:order-none lg:w-[400px] lg:flex-shrink-0 ${
+          mobileTab === "browse" ? "block" : "hidden"
+        } lg:block`}
+      >
         <Sidebar
           seasonalAnime={seasonalAnime}
           selectedIds={selectedIds}
@@ -72,7 +101,11 @@ function App() {
       </div>
 
       {/* Calendar */}
-      <div className="flex-1 overflow-hidden min-h-[60vh] lg:min-h-0">
+      <div
+        className={`order-1 w-full lg:order-none lg:flex-1 lg:overflow-hidden ${
+          mobileTab === "calendar" ? "block" : "hidden"
+        } lg:block`}
+      >
         {selectedIds.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-600">
             <div className="text-center">

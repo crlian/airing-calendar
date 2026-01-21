@@ -5,7 +5,7 @@ import type { CalendarEvent } from "@/types/calendar";
 import type { CalendarPreferences } from "@/types/preferences";
 import type { EventContentArg } from "@fullcalendar/core";
 import { AnimeEvent } from "./AnimeEvent";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateTime } from "luxon";
 
 interface CalendarViewProps {
@@ -18,6 +18,7 @@ const padHour = (value: number) => value.toString().padStart(2, "0");
 
 export function CalendarView({ events, onRemoveAnime, preferences }: CalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const renderEventContent = useCallback(
     (arg: EventContentArg) => {
       return (
@@ -39,11 +40,30 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
   );
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const updateView = () => setIsMobile(mediaQuery.matches);
+    updateView();
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", updateView);
+      return () => mediaQuery.removeEventListener("change", updateView);
+    }
+    mediaQuery.addListener(updateView);
+    return () => mediaQuery.removeListener(updateView);
+  }, []);
+
+  useEffect(() => {
     const calendarApi = calendarRef.current?.getApi();
     if (!calendarApi) return;
     calendarApi.setOption("slotMinTime", startTime);
     calendarApi.setOption("scrollTime", startTime);
   }, [startTime]);
+
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+    calendarApi.changeView(isMobile ? "listWeek" : "timeGridWeek");
+  }, [isMobile]);
 
   return (
     <div className="h-full p-4 flex flex-col">
@@ -54,12 +74,12 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, listPlugin]}
-          initialView="timeGridWeek"
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "timeGridWeek,listWeek",
-          }}
+          initialView={isMobile ? "listWeek" : "timeGridWeek"}
+          headerToolbar={
+            isMobile
+              ? { left: "", center: "title", right: "" }
+              : { left: "prev,next today", center: "title", right: "timeGridWeek,listWeek" }
+          }
           buttonText={{ today: "Today", timeGridWeek: "Week", listWeek: "List" }}
           nowIndicator={true}
           weekends={true}
@@ -69,7 +89,7 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
           slotMaxTime="24:00:00"
           slotDuration="00:30:00"
           slotLabelInterval="01:00"
-          height="100%"
+          height={isMobile ? "auto" : "100%"}
           events={events}
           eventContent={renderEventContent}
           slotLabelFormat={{
