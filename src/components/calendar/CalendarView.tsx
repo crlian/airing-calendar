@@ -23,6 +23,7 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
         <AnimeEvent
           event={arg.event}
           timeText={arg.timeText}
+          viewType={arg.view.type}
           onRemove={onRemoveAnime}
         />
       );
