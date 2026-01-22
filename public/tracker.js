@@ -19,30 +19,46 @@
     return sid;
   }
 
-  // Capture visit data
-  const visitData = {
-    sid: getSessionId(), // Session ID for user differentiation
-    page: window.location.pathname + window.location.search,
-    referrer: document.referrer || 'direct',
-    timestamp: new Date().toISOString(),
-    userAgent: navigator.userAgent,
-    hostname: window.location.hostname
-  };
+  // Check if this is a new visitor (not seen this sid before)
+  function isNewVisitor() {
+    const currentSid = getSessionId();
+    const lastSeenSid = localStorage.getItem('lastSeenSid');
 
-  // Send to n8n webhook
-  try {
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(visitData),
-      // Use keepalive to ensure request completes even if page closes
-      keepalive: true
-    }).catch(() => {
-      // Silently fail - don't impact user experience
-    });
-  } catch (e) {
-    // Silently fail
+    if (currentSid !== lastSeenSid) {
+      localStorage.setItem('lastSeenSid', currentSid);
+      return true;
+    }
+
+    return false;
+  }
+
+  // Only track if it's a new visitor
+  if (isNewVisitor()) {
+    // Capture visit data
+    const visitData = {
+      sid: getSessionId(),
+      page: window.location.pathname + window.location.search,
+      referrer: document.referrer || 'direct',
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      hostname: window.location.hostname
+    };
+
+    // Send to n8n webhook
+    try {
+      fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(visitData),
+        // Use keepalive to ensure request completes even if page closes
+        keepalive: true
+      }).catch(() => {
+        // Silently fail - don't impact user experience
+      });
+    } catch (e) {
+      // Silently fail
+    }
   }
 })();
