@@ -3,7 +3,7 @@
 
 (function() {
   // Replace with your n8n webhook URL
-  const WEBHOOK_URL = 'http://46.224.68.100:5678/webhook/7f1760d5-e651-4453-ba37-743e7ca417d3';
+  const WEBHOOK_URL = 'https://crlian.site/webhook/7f1760d5-e651-4453-ba37-743e7ca417d3';
 
   // Generate or retrieve Session ID
   function getSessionId() {
