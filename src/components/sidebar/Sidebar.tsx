@@ -1,15 +1,21 @@
 import { useState, useCallback, useMemo, useRef, useTransition, useEffect } from "react";
 import type { AnimeData, SearchAnimeResult } from "@/types/anime";
+import type { CalendarEvent } from "@/types/calendar";
 import { SearchBar } from "./SearchBar";
 import { AnimeCard } from "./AnimeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { jikanClient, JikanRateLimitError } from "@/lib/api/jikan";
 import type { CalendarPreferences } from "@/types/preferences";
+import { changelogEntries } from "@/data/changelog";
+import { DateTime } from "luxon";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Settings } from "lucide-react";
 
 interface SidebarProps {
   seasonalAnime: AnimeData[];
   selectedIds: number[];
+  calendarEvents: CalendarEvent[];
   onAddAnime: (anime: AnimeData) => void;
   onRemoveAnime: (id: number) => void;
   calendarPreferences: CalendarPreferences;
@@ -81,6 +87,7 @@ const getValidSearchCache = (
 export function Sidebar({
   seasonalAnime,
   selectedIds,
+  calendarEvents,
   onAddAnime,
   onRemoveAnime,
   calendarPreferences,
@@ -102,9 +109,48 @@ export function Sidebar({
   const [isPending, startTransition] = useTransition();
   const searchCacheRef = useRef<Map<string, SearchCacheEntry>>(new Map());
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const [startHourInput, setStartHourInput] = useState(
     () => `${calendarPreferences.startHour}`
   );
+  const visibleChangelog = changelogEntries.slice(0, 4);
+  const weeklySummary = useMemo(() => {
+    const now = DateTime.local().setLocale("en");
+    const currentDayIndex = now.weekday % 7;
+    const daysToSubtract =
+      (currentDayIndex - calendarPreferences.weekStart + 7) % 7;
+    const weekStart = now.startOf("day").minus({ days: daysToSubtract });
+    const weekEnd = weekStart.plus({ days: 7 });
+
+    const eventsWithDate = calendarEvents
+      .map((event) => {
+        const nextOccurrence = event.extendedProps?.nextOccurrence;
+        if (!nextOccurrence) return null;
+        return {
+          event,
+          dateTime: DateTime.fromJSDate(nextOccurrence).setLocale("en"),
+        };
+      })
+      .filter((entry): entry is { event: CalendarEvent; dateTime: DateTime } => Boolean(entry));
+
+    const weeklyCount = eventsWithDate.filter(({ dateTime }) => {
+      const time = dateTime.toMillis();
+      return time >= weekStart.toMillis() && time < weekEnd.toMillis();
+    }).length;
+
+    const nextEvent = eventsWithDate
+      .filter(({ dateTime }) => dateTime.toMillis() >= now.toMillis())
+      .sort((a, b) => a.dateTime.toMillis() - b.dateTime.toMillis())[0];
+
+    const nextLabel = nextEvent
+      ? `${nextEvent.dateTime.toFormat("ccc HH:mm")} - ${nextEvent.event.title}`
+      : "-";
+
+    return {
+      weeklyCount,
+      nextLabel,
+    };
+  }, [calendarEvents, calendarPreferences.weekStart]);
 
   // Pagination state
   const [currentQuery, setCurrentQuery] = useState("");
@@ -267,23 +313,6 @@ export function Sidebar({
         <div className="flex items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl font-bold font-display">Anime Season</h1>
           <div className="flex items-center gap-2">
-            <a
-              href="https://github.com/crlian/airing-calendar"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 transition hover:border-black hover:text-black"
-              aria-label="View the project on GitHub"
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                className="h-3.5 w-3.5"
-                fill="currentColor"
-              >
-                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.483 0-.238-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.455-1.157-1.111-1.466-1.111-1.466-.908-.62.069-.607.069-.607 1.004.071 1.532 1.032 1.532 1.032.892 1.529 2.341 1.087 2.91.832.091-.647.35-1.087.636-1.337-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.57 9.57 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.698 1.028 1.591 1.028 2.682 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .268.18.58.688.481A10.02 10.02 0 0 0 22 12c0-5.523-4.477-10-10-10z" />
-              </svg>
-              GitHub
-            </a>
             <button
               type="button"
               className="text-xs font-medium text-gray-600 underline underline-offset-4"
@@ -293,6 +322,109 @@ export function Sidebar({
             >
               How it works
             </button>
+            <button
+              type="button"
+              className="text-xs font-medium text-gray-600 underline underline-offset-4"
+              onClick={() => setShowChangelog((prev) => !prev)}
+              aria-expanded={showChangelog}
+              aria-controls="whats-new"
+            >
+              What's new
+            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-600 transition hover:border-black hover:text-black"
+                  aria-label="Open calendar settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[23rem]">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Calendar settings
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[11px] uppercase tracking-wide text-gray-500">
+                      Time format
+                    </span>
+                    <select
+                      className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 focus:border-black focus:outline-none"
+                      value={calendarPreferences.timeFormat}
+                      onChange={(event) =>
+                        onCalendarPreferencesChange({
+                          timeFormat: event.target.value as CalendarPreferences["timeFormat"],
+                        })
+                      }
+                    >
+                      <option value="24h">24h</option>
+                      <option value="12h">12h</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[11px] uppercase tracking-wide text-gray-500">
+                      Week starts
+                    </span>
+                    <select
+                      className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 focus:border-black focus:outline-none"
+                      value={calendarPreferences.weekStart}
+                      onChange={(event) =>
+                        onCalendarPreferencesChange({
+                          weekStart: Number(event.target.value),
+                        })
+                      }
+                    >
+                      <option value={0}>Sunday</option>
+                      <option value={1}>Monday</option>
+                      <option value={2}>Tuesday</option>
+                      <option value={3}>Wednesday</option>
+                      <option value={4}>Thursday</option>
+                      <option value={5}>Friday</option>
+                      <option value={6}>Saturday</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[11px] uppercase tracking-wide text-gray-500">
+                      Start hour
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={23}
+                      value={startHourInput}
+                      onChange={(event) => {
+                        const { value } = event.target;
+                        setStartHourInput(value);
+                        if (value.trim() === "") return;
+                        const parsed = Number(value);
+                        if (Number.isNaN(parsed)) return;
+                        const clamped = Math.min(23, Math.max(0, parsed));
+                        onCalendarPreferencesChange({ startHour: clamped });
+                      }}
+                      onBlur={() => {
+                        if (startHourInput.trim() === "") {
+                          setStartHourInput(`${calendarPreferences.startHour}`);
+                          return;
+                        }
+                        const parsed = Number(startHourInput);
+                        if (Number.isNaN(parsed)) {
+                          setStartHourInput(`${calendarPreferences.startHour}`);
+                          return;
+                        }
+                        const clamped = Math.min(23, Math.max(0, parsed));
+                        if (clamped !== calendarPreferences.startHour) {
+                          onCalendarPreferencesChange({ startHour: clamped });
+                        }
+                        setStartHourInput(`${clamped}`);
+                      }}
+                      className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 focus:border-black focus:outline-none"
+                    />
+                  </label>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         {showHowItWorks && (
@@ -308,84 +440,30 @@ export function Sidebar({
             </ol>
           </div>
         )}
+        {showChangelog && (
+          <div
+            id="whats-new"
+            className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+          >
+            <p className="font-medium text-gray-700">Latest updates</p>
+            <ol className="mt-2 space-y-2">
+              {visibleChangelog.map((entry) => (
+                <li key={`${entry.date}-${entry.title}`} className="space-y-1">
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                    {entry.date}
+                  </div>
+                  <div>{entry.title}</div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
         <SearchBar onSearch={handleSearch} isLoading={isPending} />
-        <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-gray-600">
-          <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-wide text-gray-500">
-              Time format
-            </span>
-            <select
-              className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800"
-              value={calendarPreferences.timeFormat}
-              onChange={(event) =>
-                onCalendarPreferencesChange({
-                  timeFormat: event.target.value as CalendarPreferences["timeFormat"],
-                })
-              }
-            >
-              <option value="24h">24h</option>
-              <option value="12h">12h</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-wide text-gray-500">
-              Week starts
-            </span>
-            <select
-              className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800"
-              value={calendarPreferences.weekStart}
-              onChange={(event) =>
-                onCalendarPreferencesChange({
-                  weekStart: Number(event.target.value),
-                })
-              }
-            >
-              <option value={0}>Sunday</option>
-              <option value={1}>Monday</option>
-              <option value={2}>Tuesday</option>
-              <option value={3}>Wednesday</option>
-              <option value={4}>Thursday</option>
-              <option value={5}>Friday</option>
-              <option value={6}>Saturday</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-wide text-gray-500">
-              Start hour
-            </span>
-            <input
-              type="number"
-              min={0}
-              max={23}
-              value={startHourInput}
-              onChange={(event) => {
-                const { value } = event.target;
-                setStartHourInput(value);
-                if (value.trim() === "") return;
-                const parsed = Number(value);
-                if (Number.isNaN(parsed)) return;
-                const clamped = Math.min(23, Math.max(0, parsed));
-                onCalendarPreferencesChange({ startHour: clamped });
-              }}
-              onBlur={() => {
-                if (startHourInput.trim() === "") {
-                  setStartHourInput(`${calendarPreferences.startHour}`);
-                  return;
-                }
-                const parsed = Number(startHourInput);
-                if (Number.isNaN(parsed)) {
-                  setStartHourInput(`${calendarPreferences.startHour}`);
-                  return;
-                }
-                const clamped = Math.min(23, Math.max(0, parsed));
-                if (clamped !== calendarPreferences.startHour) {
-                  onCalendarPreferencesChange({ startHour: clamped });
-                }
-                setStartHourInput(`${clamped}`);
-              }}
-              className="h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800"
-            />
-          </label>
+        <div className="mt-4 text-[11px] text-gray-500">
+          <div>
+            Remaining this week: {weeklySummary.weeklyCount} {weeklySummary.weeklyCount === 1 ? "episode" : "episodes"}
+          </div>
+          <div>Next: {weeklySummary.nextLabel}</div>
         </div>
       </div>
 
@@ -487,7 +565,26 @@ export function Sidebar({
 
       {/* Footer */}
       <div className="p-4 border-t border-black text-xs text-gray-600">
-        <div>{selectedIds.length} anime selected</div>
+        <div className="flex items-center justify-between gap-3">
+          <div>{selectedIds.length} anime selected</div>
+          <a
+            href="https://github.com/crlian/airing-calendar"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-semibold text-gray-700 transition hover:border-black hover:text-black"
+            aria-label="View the project on GitHub"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-3.5 w-3.5"
+              fill="currentColor"
+            >
+              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.483 0-.238-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.455-1.157-1.111-1.466-1.111-1.466-.908-.62.069-.607.069-.607 1.004.071 1.532 1.032 1.532 1.032.892 1.529 2.341 1.087 2.91.832.091-.647.35-1.087.636-1.337-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.57 9.57 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.698 1.028 1.591 1.028 2.682 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .268.18.58.688.481A10.02 10.02 0 0 0 22 12c0-5.523-4.477-10-10-10z" />
+            </svg>
+            GitHub
+          </a>
+        </div>
         <div className="mt-2 text-[11px] text-gray-500">
           Data via Jikan (unofficial MAL API). Not affiliated with MyAnimeList.
         </div>

@@ -81,12 +81,13 @@ function App() {
           mobileTab === "browse" ? "block" : "hidden"
         } lg:block`}
       >
-        <Sidebar
-          seasonalAnime={seasonalAnime}
-          selectedIds={selectedIds}
-          onAddAnime={addAnime}
-          onRemoveAnime={removeAnime}
-          calendarPreferences={preferences}
+          <Sidebar
+            seasonalAnime={seasonalAnime}
+            selectedIds={selectedIds}
+            calendarEvents={calendarEvents}
+            onAddAnime={addAnime}
+            onRemoveAnime={removeAnime}
+            calendarPreferences={preferences}
           onCalendarPreferencesChange={updatePreferences}
           seasonalError={seasonalError ? seasonalError.message : null}
           onRetrySeasonal={refetchSeasonal}
