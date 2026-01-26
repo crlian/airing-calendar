@@ -33,3 +33,5 @@ dist-ssr
 
 # Tooling
 .playwright-mcp/
+.vercel
+.env*.local

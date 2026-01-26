@@ -4,7 +4,8 @@ import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
 import { useCalendarPreferences } from "@/hooks/useCalendarPreferences";
 import type { AnimeData } from "@/types/anime";
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
+import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 import "./App.css";
 
 const CalendarView = lazy(() =>
@@ -35,6 +36,46 @@ function App() {
   // Manage selected anime
   const { selectedIds, selectedAnime, addAnime, removeAnime } = useSelectedAnime();
   const { preferences, updatePreferences } = useCalendarPreferences();
+  const [hasAddedAnime, setHasAddedAnime] = useState(false);
+
+  const handleAddAnime = useCallback(
+    (anime: AnimeData) => {
+      setHasAddedAnime(true);
+      addAnime(anime);
+    },
+    [addAnime]
+  );
+
+  const handleFeedbackSubmit = useCallback(
+    async (submission: {
+      message: string;
+      honeypot: string;
+      turnstileToken?: string | null;
+    }) => {
+      const payload = {
+        message: submission.message,
+        honeypot: submission.honeypot,
+        turnstileToken: submission.turnstileToken ?? null,
+        path: window.location.pathname,
+        userAgent: window.navigator.userAgent,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timestamp: new Date().toISOString(),
+      };
+
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit feedback");
+      }
+    },
+    []
+  );
 
   const availableAnime = useMemo(() => {
     const map = new Map<number, AnimeData>();
@@ -81,13 +122,13 @@ function App() {
           mobileTab === "browse" ? "block" : "hidden"
         } lg:block`}
       >
-          <Sidebar
-            seasonalAnime={seasonalAnime}
-            selectedIds={selectedIds}
-            calendarEvents={calendarEvents}
-            onAddAnime={addAnime}
-            onRemoveAnime={removeAnime}
-            calendarPreferences={preferences}
+        <Sidebar
+          seasonalAnime={seasonalAnime}
+          selectedIds={selectedIds}
+          calendarEvents={calendarEvents}
+          onAddAnime={handleAddAnime}
+          onRemoveAnime={removeAnime}
+          calendarPreferences={preferences}
           onCalendarPreferencesChange={updatePreferences}
           seasonalError={seasonalError ? seasonalError.message : null}
           onRetrySeasonal={refetchSeasonal}
@@ -133,6 +174,7 @@ function App() {
           </Suspense>
         )}
       </div>
+      <FeedbackWidget hasAddedAnime={hasAddedAnime} onSubmit={handleFeedbackSubmit} />
     </div>
   );
 }

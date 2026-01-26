@@ -438,6 +438,9 @@ export function Sidebar({
               <li>2. Tap Add to include a show.</li>
               <li>3. Check the calendar for local air times.</li>
             </ol>
+            <p className="mt-2 text-[11px] text-gray-500">
+              Updating this daily. Got feedback?
+            </p>
           </div>
         )}
         {showChangelog && (
