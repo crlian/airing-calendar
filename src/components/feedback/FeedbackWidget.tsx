@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const FEEDBACK_STORAGE_KEY = "anime-calendar:feedback-sent";
-const QUESTION_TEXT = "What's missing or confusing here?";
-const BUBBLE_TEXT = "Got a minute?";
+const QUESTION_TEXT = "See something wrong or missing?";
+const BUBBLE_TEXT = "Got feedback?";
 const THANK_YOU_TEXT = "Thanks — I read every message 🙏";
-const AUTO_CLOSE_MS = 2600;
 
 type FeedbackStatus = "idle" | "submitting" | "sent";
 
@@ -100,12 +99,12 @@ export function FeedbackWidget({ hasAddedAnime, onSubmit }: FeedbackWidgetProps)
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<FeedbackStatus>("idle");
-  const [isDismissed, setIsDismissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState("");
 
   const hasTriggeredRef = useRef(false);
   const previousAddRef = useRef(hasAddedAnime);
+  const widgetRef = useRef<HTMLDivElement | null>(null);
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = useRef<string | null>(null);
   const turnstileResolverRef = useRef<((token: string | null) => void) | null>(
@@ -117,37 +116,27 @@ export function FeedbackWidget({ hasAddedAnime, onSubmit }: FeedbackWidgetProps)
     []
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem(FEEDBACK_STORAGE_KEY) === "true") {
-      setIsDismissed(true);
-    }
-  }, []);
-
   const markTriggered = useCallback(() => {
-    if (hasTriggeredRef.current || isDismissed) return;
+    if (hasTriggeredRef.current) return;
     hasTriggeredRef.current = true;
     setIsEligible(true);
-  }, [isDismissed]);
+  }, []);
 
   useEffect(() => {
-    if (isDismissed) return;
     const timeout = window.setTimeout(() => {
       markTriggered();
     }, 30000);
     return () => window.clearTimeout(timeout);
-  }, [isDismissed, markTriggered]);
+  }, [markTriggered]);
 
   useEffect(() => {
-    if (isDismissed) return;
     if (!previousAddRef.current && hasAddedAnime) {
       markTriggered();
     }
     previousAddRef.current = hasAddedAnime;
-  }, [hasAddedAnime, isDismissed, markTriggered]);
+  }, [hasAddedAnime, markTriggered]);
 
   useEffect(() => {
-    if (isDismissed) return;
     const handleScroll = (event: Event) => {
       if (hasTriggeredRef.current) return;
       if (getScrollRatio(event.target) >= 0.3) {
@@ -158,7 +147,7 @@ export function FeedbackWidget({ hasAddedAnime, onSubmit }: FeedbackWidgetProps)
     const options: AddEventListenerOptions = { passive: true, capture: true };
     document.addEventListener("scroll", handleScroll, options);
     return () => document.removeEventListener("scroll", handleScroll, options);
-  }, [isDismissed, markTriggered]);
+  }, [markTriggered]);
 
   useEffect(() => {
     if (!isOpen || !siteKey || !turnstileContainerRef.current) return;
@@ -208,14 +197,23 @@ export function FeedbackWidget({ hasAddedAnime, onSubmit }: FeedbackWidgetProps)
   }, [isOpen, siteKey]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (status !== "sent" || !isOpen) return;
-    const timeout = window.setTimeout(() => {
-      setIsOpen(false);
-      setIsDismissed(true);
-    }, AUTO_CLOSE_MS);
-    return () => window.clearTimeout(timeout);
-  }, [status, isOpen]);
+    if (!isOpen) return;
+    const handleOutside = (event: Event) => {
+      const target = event.target;
+      if (!widgetRef.current || !(target instanceof Node)) return;
+      if (!widgetRef.current.contains(target)) {
+        setIsOpen(false);
+      }
+    };
+
+    const options: AddEventListenerOptions = { capture: true };
+    document.addEventListener("mousedown", handleOutside, options);
+    document.addEventListener("touchstart", handleOutside, options);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside, options);
+      document.removeEventListener("touchstart", handleOutside, options);
+    };
+  }, [isOpen]);
 
   const handleSend = async () => {
     const trimmed = message.trim();
@@ -282,22 +280,40 @@ export function FeedbackWidget({ hasAddedAnime, onSubmit }: FeedbackWidgetProps)
   const handleBubbleClick = () => {
     setIsOpen((prev) => {
       const next = !prev;
-      if (!next && status === "sent") {
-        setIsDismissed(true);
+      if (next && status === "sent") {
+        setStatus("idle");
+        setError(null);
+        setMessage("");
+        setHoneypot("");
       }
       return next;
     });
   };
 
-  if (isDismissed) return null;
+  const handleSendAnother = () => {
+    setStatus("idle");
+    setError(null);
+    setMessage("");
+    setHoneypot("");
+    setIsOpen(true);
+  };
+
   if (!isEligible && status !== "sent") return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
+    <div
+      ref={widgetRef}
+      className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6"
+    >
       {isOpen && (
         <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-black/10 bg-white p-4 text-sm text-gray-700 shadow-[0_18px_40px_rgba(15,23,42,0.15)]">
           {status === "sent" ? (
-            <div className="text-sm text-gray-800">{THANK_YOU_TEXT}</div>
+            <div className="space-y-3">
+              <div className="text-sm text-gray-800">{THANK_YOU_TEXT}</div>
+              <Button size="sm" variant="outline" onClick={handleSendAnother}>
+                Send another
+              </Button>
+            </div>
           ) : (
             <>
               <div className="text-sm font-semibold text-gray-900">{QUESTION_TEXT}</div>
@@ -305,6 +321,7 @@ export function FeedbackWidget({ hasAddedAnime, onSubmit }: FeedbackWidgetProps)
                 className="mt-3 min-h-[120px] w-full resize-none rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-black focus:outline-none"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
+                placeholder="Missing anime? Wrong time? Something confusing?"
                 maxLength={1000}
                 rows={5}
               />
