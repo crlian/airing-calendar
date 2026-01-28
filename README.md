@@ -21,12 +21,12 @@ https://aniseason.com
 
 ## Visitor Tracking
 
-This project includes visitor tracking functionality (`public/tracker.js`) that sends site visit data to a personal n8n webhook for Telegram notifications. This feature is enabled only on the live site (aniseason.com).
+This project includes visitor tracking functionality (`public/tracker.js`) that sends site visit data to a serverless endpoint (`/api/event`) which relays to an n8n webhook for Telegram notifications. This feature is enabled only on the live site (aniseason.com).
 
 If you fork or deploy this project:
-- The tracker will not send data unless you configure it with your own webhook URL
+- The tracker will not send data unless you configure `N8N_TRACKER_WEBHOOK_URL`
 - You can disable tracking by removing the script tag from `index.html`
-- Or replace the `WEBHOOK_URL` in `public/tracker.js` with your own endpoint
+- Or change the endpoint in `public/tracker.js` if you have a custom relay
 
 The tracker collects: session ID, visited page, referrer, timestamp, user agent, and hostname. Data is only sent once per unique visitor session.
 

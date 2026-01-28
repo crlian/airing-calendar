@@ -2,12 +2,11 @@
 // Sends page view events to n8n webhook for Telegram notifications
 
 (function() {
-  // Replace with your n8n webhook URL
-  const WEBHOOK_URL = 'https://crlian.site/webhook/7f1760d5-e651-4453-ba37-743e7ca417d3';
+  const TRACK_ENDPOINT = "/api/event";
 
   // Generate or retrieve Session ID
   function getSessionId() {
-    const key = 'aniseason_sid';
+    const key = "aniseason_sid";
     let sid = sessionStorage.getItem(key);
 
     if (!sid) {
@@ -22,10 +21,10 @@
   // Check if this is a new visitor (not seen this sid before)
   function isNewVisitor() {
     const currentSid = getSessionId();
-    const lastSeenSid = localStorage.getItem('lastSeenSid');
+    const lastSeenSid = localStorage.getItem("lastSeenSid");
 
     if (currentSid !== lastSeenSid) {
-      localStorage.setItem('lastSeenSid', currentSid);
+      localStorage.setItem("lastSeenSid", currentSid);
       return true;
     }
 
@@ -38,18 +37,18 @@
     const visitData = {
       sid: getSessionId(),
       page: window.location.pathname + window.location.search,
-      referrer: document.referrer || 'direct',
+      referrer: document.referrer || "direct",
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       hostname: window.location.hostname
     };
 
-    // Send to n8n webhook
+    // Send to serverless endpoint
     try {
-      fetch(WEBHOOK_URL, {
-        method: 'POST',
+      fetch(TRACK_ENDPOINT, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(visitData),
         // Use keepalive to ensure request completes even if page closes

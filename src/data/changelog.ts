@@ -5,11 +5,11 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
-    date: "Jan 26, 2026",
-    title: "Added a lightweight feedback bubble after interaction.",
+    date: "Jan 28, 2026",
+    title: "Got a message asking for total watch time, thought it was a great idea so I added it.",
   },
   {
-    date: "Jan 23, 2026",
-    title: "Added a weekly summary and collapsible calendar settings.",
+    date: "Jan 26, 2026",
+    title: "Added a lightweight feedback bubble after interaction.",
   },
 ];

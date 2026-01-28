@@ -6,11 +6,12 @@ import { AnimeCard } from "./AnimeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { jikanClient, JikanRateLimitError } from "@/lib/api/jikan";
+import { formatMinutes, getEpisodeMinutes } from "@/lib/utils/duration";
 import type { CalendarPreferences } from "@/types/preferences";
 import { changelogEntries } from "@/data/changelog";
 import { DateTime } from "luxon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Settings } from "lucide-react";
+import { Info, Settings } from "lucide-react";
 
 interface SidebarProps {
   seasonalAnime: AnimeData[];
@@ -34,9 +35,16 @@ interface SidebarProps {
 const SEARCH_CACHE_KEY = "anime-calendar:search-cache";
 const SEARCH_CACHE_DURATION = 10 * 60 * 1000;
 const SEARCH_CACHE_MAX_ENTRIES = 30;
+const LAST_SEEN_UPDATE_KEY = "anime-calendar:last-seen-update";
+const CHANGELOG_DATE_FORMAT = "MMM dd, yyyy";
 
 type SearchCacheEntry = SearchAnimeResult & {
   timestamp: number;
+};
+
+const parseChangelogDate = (value: string): DateTime | null => {
+  const parsed = DateTime.fromFormat(value, CHANGELOG_DATE_FORMAT, { locale: "en" });
+  return parsed.isValid ? parsed : null;
 };
 
 const loadSearchCache = (): Map<string, SearchCacheEntry> => {
@@ -110,10 +118,38 @@ export function Sidebar({
   const searchCacheRef = useRef<Map<string, SearchCacheEntry>>(new Map());
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [lastSeenUpdate, setLastSeenUpdate] = useState<DateTime | null>(() => {
+    try {
+      const stored = localStorage.getItem(LAST_SEEN_UPDATE_KEY);
+      if (!stored) return null;
+      const parsed = DateTime.fromISO(stored, { locale: "en" });
+      return parsed.isValid ? parsed : null;
+    } catch (error) {
+      console.error("Failed to load changelog state:", error);
+      return null;
+    }
+  });
   const [startHourInput, setStartHourInput] = useState(
     () => `${calendarPreferences.startHour}`
   );
   const visibleChangelog = changelogEntries.slice(0, 4);
+  const latestChangelogDate = useMemo(() => {
+    return changelogEntries.reduce<DateTime | null>((latest, entry) => {
+      const parsed = parseChangelogDate(entry.date);
+      if (!parsed) return latest;
+      if (!latest || parsed.toMillis() > latest.toMillis()) return parsed;
+      return latest;
+    }, null);
+  }, [changelogEntries]);
+  const unseenUpdateCount = useMemo(() => {
+    if (!lastSeenUpdate) return changelogEntries.length;
+    return changelogEntries.reduce((count, entry) => {
+      const parsed = parseChangelogDate(entry.date);
+      if (!parsed) return count;
+      return parsed.toMillis() > lastSeenUpdate.toMillis() ? count + 1 : count;
+    }, 0);
+  }, [changelogEntries, lastSeenUpdate]);
+  const displayUnseenUpdateCount = Math.min(unseenUpdateCount, 2);
   const weeklySummary = useMemo(() => {
     const now = DateTime.local().setLocale("en");
     const currentDayIndex = now.weekday % 7;
@@ -133,10 +169,17 @@ export function Sidebar({
       })
       .filter((entry): entry is { event: CalendarEvent; dateTime: DateTime } => Boolean(entry));
 
-    const weeklyCount = eventsWithDate.filter(({ dateTime }) => {
+    const weeklyEvents = eventsWithDate.filter(({ dateTime }) => {
       const time = dateTime.toMillis();
       return time >= weekStart.toMillis() && time < weekEnd.toMillis();
-    }).length;
+    });
+
+    const weeklyCount = weeklyEvents.length;
+
+    const remainingMinutesThisWeek = weeklyEvents.reduce((total, { event }) => {
+      return total + getEpisodeMinutes(event.extendedProps?.animeData?.duration);
+    }, 0);
+
 
     const nextEvent = eventsWithDate
       .filter(({ dateTime }) => dateTime.toMillis() >= now.toMillis())
@@ -149,8 +192,21 @@ export function Sidebar({
     return {
       weeklyCount,
       nextLabel,
+      weeklyRemainingLabel: formatMinutes(remainingMinutesThisWeek),
     };
   }, [calendarEvents, calendarPreferences.weekStart]);
+
+  useEffect(() => {
+    if (!showChangelog || !latestChangelogDate) return;
+    try {
+      const nextValue = latestChangelogDate.toISODate();
+      if (!nextValue) return;
+      localStorage.setItem(LAST_SEEN_UPDATE_KEY, nextValue);
+      setLastSeenUpdate(latestChangelogDate);
+    } catch (error) {
+      console.error("Failed to save changelog state:", error);
+    }
+  }, [showChangelog, latestChangelogDate]);
 
   // Pagination state
   const [currentQuery, setCurrentQuery] = useState("");
@@ -311,11 +367,11 @@ export function Sidebar({
       {/* Header */}
       <div className="p-4 border-b border-black">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h1 className="text-2xl font-bold font-display">Anime Season</h1>
+          <h1 className="text-2xl font-bold font-display whitespace-nowrap">Anime Season</h1>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="text-xs font-medium text-gray-600 underline underline-offset-4"
+              className="whitespace-nowrap text-xs font-medium text-gray-600 underline underline-offset-4"
               onClick={() => setShowHowItWorks((prev) => !prev)}
               aria-expanded={showHowItWorks}
               aria-controls="how-it-works"
@@ -324,12 +380,17 @@ export function Sidebar({
             </button>
             <button
               type="button"
-              className="text-xs font-medium text-gray-600 underline underline-offset-4"
+              className="inline-flex items-baseline gap-0.5 whitespace-nowrap text-xs font-medium text-gray-600 underline underline-offset-4"
               onClick={() => setShowChangelog((prev) => !prev)}
               aria-expanded={showChangelog}
               aria-controls="whats-new"
             >
-              What's new
+              <span>What's new</span>
+              {displayUnseenUpdateCount > 0 && (
+                <span className="text-[10px] leading-none text-gray-600">
+                  ({displayUnseenUpdateCount})
+                </span>
+              )}
             </button>
             <Popover>
               <PopoverTrigger asChild>
@@ -465,6 +526,22 @@ export function Sidebar({
         <div className="mt-4 text-[11px] text-gray-500">
           <div>
             Remaining this week: {weeklySummary.weeklyCount} {weeklySummary.weeklyCount === 1 ? "episode" : "episodes"}
+          </div>
+          <div>
+            Watch time remaining: {weeklySummary.weeklyRemainingLabel}
+            <span
+              className="relative ml-1 inline-flex items-center text-gray-400 group"
+              aria-label="Estimated based on average episode length."
+              tabIndex={0}
+            >
+              <Info className="relative top-[2px] h-3 w-3" aria-hidden="true" />
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 w-max -translate-x-1/2 rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+              >
+                Estimated based on average episode length.
+              </span>
+            </span>
           </div>
           <div>Next: {weeklySummary.nextLabel}</div>
         </div>

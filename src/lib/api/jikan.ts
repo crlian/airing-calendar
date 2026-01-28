@@ -42,11 +42,12 @@ const sanitizeAnime = (anime: AnimeData): AnimeData => {
     title_english: anime.title_english,
     images,
     synopsis: trimSynopsis(anime.synopsis),
+    duration: anime.duration,
     broadcast: anime.broadcast
       ? {
-          day: anime.broadcast.day,
-          time: anime.broadcast.time,
-          timezone: anime.broadcast.timezone,
+        day: anime.broadcast.day,
+        time: anime.broadcast.time,
+        timezone: anime.broadcast.timezone,
           string: anime.broadcast.string,
         }
       : undefined,

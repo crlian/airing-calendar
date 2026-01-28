@@ -25,6 +25,7 @@ export interface AnimeData {
   title_japanese?: string;
   images: AnimeImages;
   synopsis?: string;
+  duration?: string;
   broadcast?: AnimeBroadcast;
   url: string;
   score?: number;
