@@ -1,12 +1,14 @@
 import { useMemo } from "react";
-import type { AnimeData } from "@/types/anime";
+import type { AnimeData, AiringScheduleData } from "@/types/anime";
 import type { CalendarEvent } from "@/types/calendar";
+import { AiringStorage } from "@/lib/storage/airingStorage";
+import { convertUnixToLocal, convertJSTToLocal } from "@/lib/utils/timezone";
 import { parseBroadcastString, isValidBroadcast } from "@/lib/utils/parser";
-import { convertJSTToLocal } from "@/lib/utils/timezone";
 
 interface UseAnimeDataParams {
   selectedIds: number[];
   animeList: AnimeData[];
+  airingData?: Map<number, AiringScheduleData>;
 }
 
 interface UseAnimeDataReturn {
@@ -27,6 +29,7 @@ const DAY_TO_INDEX: Record<string, number> = {
 export function useAnimeData({
   selectedIds,
   animeList,
+  airingData = new Map(),
 }: UseAnimeDataParams): UseAnimeDataReturn {
   const animeById = useMemo(() => {
     return new Map(animeList.map((anime) => [anime.mal_id, anime]));
@@ -42,23 +45,32 @@ export function useAnimeData({
     const events: CalendarEvent[] = [];
 
     for (const anime of selectedAnimeList) {
-      // Skip anime without broadcast info
-      if (!anime.broadcast?.string) {
-        console.warn(`Anime ${anime.title} has no broadcast information`);
-        continue;
+      let localTime = null;
+
+      // Try airing data from props first (from seasonal anime)
+      const propAiringData = airingData.get(anime.mal_id);
+      if (propAiringData) {
+        localTime = convertUnixToLocal(propAiringData.airingAt);
       }
 
-      // Parse the broadcast string
-      const parsed = parseBroadcastString(anime.broadcast.string);
-      if (!isValidBroadcast(parsed)) {
-        console.warn(`Failed to parse broadcast for ${anime.title}: ${anime.broadcast.string}`);
-        continue;
-      }
-
-      // Convert JST to local timezone
-      const localTime = convertJSTToLocal(parsed.day, parsed.time);
+      // Fallback to AiringStorage (for anime added from search)
       if (!localTime) {
-        console.warn(`Failed to convert timezone for ${anime.title}`);
+        const storedAiring = AiringStorage.getAiring(anime.mal_id);
+        if (storedAiring) {
+          localTime = convertUnixToLocal(storedAiring.airingAt);
+        }
+      }
+
+      // Fallback to legacy Jikan broadcast data (for old saved anime)
+      if (!localTime && anime.broadcast?.string) {
+        const parsed = parseBroadcastString(anime.broadcast.string);
+        if (isValidBroadcast(parsed)) {
+          localTime = convertJSTToLocal(parsed.day, parsed.time);
+        }
+      }
+
+      if (!localTime) {
+        console.warn(`No broadcast information available for ${anime.title}`);
         continue;
       }
 
@@ -87,7 +99,7 @@ export function useAnimeData({
     }
 
     return events;
-  }, [selectedAnimeList]);
+  }, [selectedAnimeList, airingData]);
 
   return {
     calendarEvents,

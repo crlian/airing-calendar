@@ -128,3 +128,38 @@ export function toISOString(date: DateTime | Date): string {
   }
   return date.toISO() || "";
 }
+
+/**
+ * Converts Unix timestamp to local broadcast time
+ * @param timestamp - Unix timestamp in seconds (from AniList)
+ * @returns LocalBroadcastTime with converted day, time, and datetime
+ */
+export function convertUnixToLocal(timestamp: number): LocalBroadcastTime | null {
+  try {
+    // AniList provides Unix timestamp in seconds (UTC)
+    const dateTime = DateTime.fromSeconds(timestamp, { zone: "utc" });
+
+    // Convert to local timezone
+    const localDateTime = dateTime.setZone("local");
+
+    // Get local day name
+    const localDayIndex = localDateTime.weekday % 7;
+    const localDayName = Object.keys(DAY_MAP).find(
+      (key) => DAY_MAP[key] === localDayIndex
+    );
+
+    if (!localDayName) {
+      console.error("Could not determine local day name from timestamp");
+      return null;
+    }
+
+    return {
+      localDay: localDayName,
+      localTime: localDateTime.toFormat("HH:mm"),
+      localDatetime: localDateTime.toJSDate(),
+    };
+  } catch (error) {
+    console.error("Error converting Unix timestamp to local time:", error);
+    return null;
+  }
+}

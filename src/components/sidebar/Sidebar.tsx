@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo, useRef, useTransition, useEffect } from "react";
-import type { AnimeData, SearchAnimeResult } from "@/types/anime";
+import type { AnimeData, AiringScheduleData } from "@/types/anime";
 import type { CalendarEvent } from "@/types/calendar";
 import { SearchBar } from "./SearchBar";
 import { AnimeCard } from "./AnimeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { jikanClient, JikanRateLimitError } from "@/lib/api/jikan";
+import { anilistClient, AniListRateLimitError, type AniListAnimeResult } from "@/lib/api/anilist";
+import { AiringStorage } from "@/lib/storage/airingStorage";
 import { formatMinutes, getEpisodeMinutes } from "@/lib/utils/duration";
 import type { CalendarPreferences } from "@/types/preferences";
 import { changelogEntries } from "@/data/changelog";
@@ -13,10 +14,23 @@ import { DateTime } from "luxon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Info, Settings } from "lucide-react";
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/**
+ * Format Unix timestamp as JST broadcast string: "Fridays at 23:00 (JST)"
+ */
+function formatJstBroadcast(airingAt: number): string {
+  const dateTime = DateTime.fromSeconds(airingAt, { zone: "Asia/Tokyo" });
+  const dayName = DAY_NAMES[dateTime.weekday % 7];
+  const time = dateTime.toFormat("HH:mm");
+  return `${dayName}s at ${time} (JST)`;
+}
+
 interface SidebarProps {
   seasonalAnime: AnimeData[];
   selectedIds: number[];
   calendarEvents: CalendarEvent[];
+  airingData?: Map<number, AiringScheduleData>;
   onAddAnime: (anime: AnimeData) => void;
   onRemoveAnime: (id: number) => void;
   calendarPreferences: CalendarPreferences;
@@ -25,8 +39,6 @@ interface SidebarProps {
   onRetrySeasonal: () => Promise<void>;
   isSeasonalLoading: boolean;
   seasonalHasNextPage: boolean;
-  seasonalCurrentPage: number;
-  seasonalTotalPages: number;
   seasonalIsLoadingMore: boolean;
   seasonalLoadMoreError: string | null;
   onLoadMoreSeasonal: () => Promise<void>;
@@ -38,7 +50,7 @@ const SEARCH_CACHE_MAX_ENTRIES = 30;
 const LAST_SEEN_UPDATE_KEY = "anime-calendar:last-seen-update";
 const CHANGELOG_DATE_FORMAT = "MMM dd, yyyy";
 
-type SearchCacheEntry = SearchAnimeResult & {
+type SearchCacheEntry = AniListAnimeResult & {
   timestamp: number;
 };
 
@@ -96,6 +108,7 @@ export function Sidebar({
   seasonalAnime,
   selectedIds,
   calendarEvents,
+  airingData,
   onAddAnime,
   onRemoveAnime,
   calendarPreferences,
@@ -104,8 +117,6 @@ export function Sidebar({
   onRetrySeasonal,
   isSeasonalLoading,
   seasonalHasNextPage,
-  seasonalCurrentPage,
-  seasonalTotalPages,
   seasonalIsLoadingMore,
   seasonalLoadMoreError,
   onLoadMoreSeasonal,
@@ -212,7 +223,6 @@ export function Sidebar({
   const [currentQuery, setCurrentQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const seasonalSearchIndex = useMemo(() => {
@@ -229,13 +239,6 @@ export function Sidebar({
     });
   }, [seasonalAnime]);
 
-  const handleAddAnime = useCallback(
-    (anime: AnimeData) => {
-      onAddAnime(anime);
-    },
-    [onAddAnime]
-  );
-
   const handleRemoveAnime = useCallback(
     (id: number) => {
       onRemoveAnime(id);
@@ -250,7 +253,6 @@ export function Sidebar({
       setCurrentQuery("");
       setCurrentPage(1);
       setHasNextPage(false);
-      setTotalPages(1);
       setIsSearching(false);
       setSearchError(null);
       return;
@@ -268,7 +270,6 @@ export function Sidebar({
     setCurrentQuery(query);
     setCurrentPage(1);
     setHasNextPage(false);
-    setTotalPages(1);
     setIsSearching(localResults.length === 0);
 
     // Phase 2: If no local results, search the API (background, non-blocking)
@@ -278,13 +279,12 @@ export function Sidebar({
       if (cached) {
         setSearchResults(cached.data);
         setHasNextPage(cached.pagination.hasNextPage);
-        setTotalPages(cached.pagination.lastVisiblePage);
         setIsSearching(false);
         return;
       }
 
       startTransition(() => {
-        jikanClient.searchAnime(query, 1).then((result) => {
+        anilistClient.searchAnime(query, 1).then((result) => {
           searchCacheRef.current.set(cacheKey, {
             ...result,
             timestamp: Date.now(),
@@ -292,16 +292,18 @@ export function Sidebar({
           persistSearchCache(searchCacheRef.current);
           setSearchResults(result.data);
           setHasNextPage(result.pagination.hasNextPage);
-          setTotalPages(result.pagination.lastVisiblePage);
           setIsSearching(false);
+          // Store airing data from search results
+          result.airingData.forEach((data, malId) => {
+            AiringStorage.setAiring(malId, data);
+          });
         }).catch((error) => {
           console.error("Search failed:", error);
           setSearchResults([]);
           setHasNextPage(false);
-          setTotalPages(1);
           setIsSearching(false);
           setSearchError(
-            error instanceof JikanRateLimitError
+            error instanceof AniListRateLimitError
               ? error.message
               : "Search failed. Try again."
           );
@@ -331,7 +333,7 @@ export function Sidebar({
     try {
       const cacheKey = `${currentQuery.toLowerCase()}|${nextPage}`;
       const cached = getValidSearchCache(searchCacheRef.current, cacheKey);
-      const result = cached ?? await jikanClient.searchAnime(currentQuery, nextPage);
+      const result = cached ?? await anilistClient.searchAnime(currentQuery, nextPage);
       if (!cached) {
         searchCacheRef.current.set(cacheKey, {
           ...result,
@@ -344,10 +346,14 @@ export function Sidebar({
       setSearchResults(prev => [...prev, ...result.data]);
       setCurrentPage(nextPage);
       setHasNextPage(result.pagination.hasNextPage);
+      // Store airing data from search results
+      result.airingData.forEach((data, malId) => {
+        AiringStorage.setAiring(malId, data);
+      });
     } catch (error) {
       console.error("Load more failed:", error);
       setSearchError(
-        error instanceof JikanRateLimitError
+        error instanceof AniListRateLimitError
           ? error.message
           : "Failed to load more results."
       );
@@ -602,15 +608,31 @@ export function Sidebar({
               </div>
             )}
             <div className="space-y-3">
-              {displayAnime.map((anime) => (
-                <AnimeCard
-                  key={anime.mal_id}
-                  anime={anime}
-                  isSelected={selectedIds.includes(anime.mal_id)}
-                  onAddAnime={handleAddAnime}
-                  onRemoveAnime={handleRemoveAnime}
-                />
-              ))}
+              {displayAnime.map((anime) => {
+                // Get broadcast label from airingData or AiringStorage
+                let broadcastLabel: string | undefined;
+                const airingInfo = airingData?.get(anime.mal_id) || AiringStorage.getAiring(anime.mal_id);
+                if (airingInfo) {
+                  broadcastLabel = formatJstBroadcast(airingInfo.airingAt);
+                }
+
+                return (
+                  <AnimeCard
+                    key={anime.mal_id}
+                    anime={anime}
+                    isSelected={selectedIds.includes(anime.mal_id)}
+                    broadcastLabel={broadcastLabel}
+                    onAddAnime={() => {
+                      onAddAnime(anime);
+                      // Also save airing data if available
+                      if (airingInfo) {
+                        AiringStorage.setAiring(anime.mal_id, airingInfo);
+                      }
+                    }}
+                    onRemoveAnime={handleRemoveAnime}
+                  />
+                );
+              })}
             </div>
 
             {/* Load More Button - visible when searching OR when viewing seasonal anime with more pages */}
@@ -626,12 +648,6 @@ export function Sidebar({
                     ? "Loading..."
                     : "Load More"}
                 </Button>
-
-                {/* Pagination info */}
-                <div className="text-xs text-center text-gray-500">
-                  Page {hasSearched ? currentPage : seasonalCurrentPage} of{" "}
-                  {hasSearched ? totalPages : seasonalTotalPages}
-                </div>
                 {!hasSearched && seasonalLoadMoreError && (
                   <div className="text-xs text-center text-red-600">
                     {seasonalLoadMoreError}
@@ -666,7 +682,7 @@ export function Sidebar({
           </a>
         </div>
         <div className="mt-2 text-[11px] text-gray-500">
-          Data via Jikan (unofficial MAL API). Not affiliated with MyAnimeList.
+          Data via AniList API. Not affiliated with AniList.
         </div>
       </div>
     </div>

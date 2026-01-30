@@ -3,6 +3,8 @@ import { useSeasonalAnime } from "@/hooks/useSeasonalAnime";
 import { useSelectedAnime } from "@/hooks/useSelectedAnime";
 import { useAnimeData } from "@/hooks/useAnimeData";
 import { useCalendarPreferences } from "@/hooks/useCalendarPreferences";
+import { AiringStorage } from "@/lib/storage/airingStorage";
+import { anilistClient } from "@/lib/api/anilist";
 import type { AnimeData } from "@/types/anime";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
@@ -16,17 +18,18 @@ const CalendarView = lazy(() =>
 
 function App() {
   const [mobileTab, setMobileTab] = useState<"calendar" | "browse">("calendar");
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState("");
+
   useEffect(() => {
     import("@/components/calendar/CalendarView");
   }, []);
-  // Fetch seasonal anime
   const {
     data: seasonalAnime,
+    airingData,
     isLoading: isSeasonalLoading,
     error: seasonalError,
     hasNextPage: seasonalHasNextPage,
-    currentPage: seasonalCurrentPage,
-    totalPages: seasonalTotalPages,
     isLoadingMore: seasonalIsLoadingMore,
     loadMoreError: seasonalLoadMoreError,
     loadMore: loadMoreSeasonal,
@@ -34,9 +37,66 @@ function App() {
   } = useSeasonalAnime();
 
   // Manage selected anime
-  const { selectedIds, selectedAnime, addAnime, removeAnime } = useSelectedAnime();
+  const { selectedIds, selectedAnime, addAnime, removeAnime } =
+    useSelectedAnime();
   const { preferences, updatePreferences } = useCalendarPreferences();
   const [hasAddedAnime, setHasAddedAnime] = useState(false);
+
+  // Migration effect: Update old Jikan data to AniList (runs once on mount)
+  useEffect(() => {
+    const runMigration = async () => {
+      // Get current selected IDs from localStorage directly
+      const storedIds = JSON.parse(localStorage.getItem('anime-calendar:selected') || '[]');
+      if (!Array.isArray(storedIds) || storedIds.length === 0) return;
+
+      // Check which ones need migration (no AniList data)
+      const needsMigration = storedIds.filter((id: number) => !AiringStorage.getAiring(id));
+      if (needsMigration.length === 0) return;
+
+      setIsMigrating(true);
+      setMigrationStatus(`Updating schedules for ${needsMigration.length} anime...`);
+
+      try {
+        // Fetch season pages to find the saved anime
+        let page = 1;
+        let hasNext = true;
+        let updatedCount = 0;
+
+        while (hasNext && needsMigration.length > updatedCount) {
+          const result = await anilistClient.getSeasonNow(page);
+
+          // Match and collect airing data
+          for (const anime of result.data) {
+            if (needsMigration.includes(anime.mal_id)) {
+              const airingInfo = result.airingData.get(anime.mal_id);
+              if (airingInfo) {
+                AiringStorage.setAiring(anime.mal_id, airingInfo);
+                updatedCount++;
+              }
+            }
+          }
+
+          hasNext = result.pagination.hasNextPage;
+          page++;
+
+          // Safety: max 3 pages (~25 anime per page = ~75 anime max)
+          if (page > 3) break;
+        }
+
+        if (updatedCount > 0) {
+          setMigrationStatus(`Updated ${updatedCount} anime schedules!`);
+          setTimeout(() => setIsMigrating(false), 1500);
+        } else {
+          setIsMigrating(false);
+        }
+      } catch (error) {
+        console.error("Migration failed:", error);
+        setIsMigrating(false);
+      }
+    };
+
+    runMigration();
+  }, []); // Empty deps - only run once on mount
 
   const handleAddAnime = useCallback(
     (anime: AnimeData) => {
@@ -88,11 +148,23 @@ function App() {
   const { calendarEvents } = useAnimeData({
     selectedIds,
     animeList: availableAnime,
+    airingData,
   });
 
   return (
-    <div className="flex min-h-screen flex-col lg:h-screen lg:flex-row">
-      <div className="flex items-center gap-2 border-b border-black bg-white px-4 py-3 lg:hidden">
+    <>
+      {/* Migration overlay */}
+      {isMigrating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="rounded-lg bg-white p-6 text-center shadow-lg">
+            <div className="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-black mx-auto" />
+            <p className="text-sm font-medium text-gray-900">{migrationStatus}</p>
+            <p className="mt-2 text-xs text-gray-500">This will only take a moment...</p>
+          </div>
+        </div>
+      )}
+      <div className="flex min-h-screen flex-col lg:h-screen lg:flex-row">
+        <div className="flex items-center gap-2 border-b border-black bg-white px-4 py-3 lg:hidden">
         <button
           type="button"
           onClick={() => setMobileTab("calendar")}
@@ -126,6 +198,7 @@ function App() {
           seasonalAnime={seasonalAnime}
           selectedIds={selectedIds}
           calendarEvents={calendarEvents}
+          airingData={airingData}
           onAddAnime={handleAddAnime}
           onRemoveAnime={removeAnime}
           calendarPreferences={preferences}
@@ -134,8 +207,6 @@ function App() {
           onRetrySeasonal={refetchSeasonal}
           isSeasonalLoading={isSeasonalLoading}
           seasonalHasNextPage={seasonalHasNextPage}
-          seasonalCurrentPage={seasonalCurrentPage}
-          seasonalTotalPages={seasonalTotalPages}
           seasonalIsLoadingMore={seasonalIsLoadingMore}
           seasonalLoadMoreError={seasonalLoadMoreError}
           onLoadMoreSeasonal={loadMoreSeasonal}
@@ -174,8 +245,9 @@ function App() {
           </Suspense>
         )}
       </div>
-      <FeedbackWidget hasAddedAnime={hasAddedAnime} onSubmit={handleFeedbackSubmit} />
-    </div>
+        <FeedbackWidget hasAddedAnime={hasAddedAnime} onSubmit={handleFeedbackSubmit} />
+      </div>
+    </>
   );
 }
 

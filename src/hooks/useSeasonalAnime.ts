@@ -1,32 +1,36 @@
 import { useState, useEffect, useCallback } from "react";
-import type { AnimeData, SearchAnimeResult } from "@/types/anime";
-import { jikanClient, JikanRateLimitError } from "@/lib/api/jikan";
+import type { AnimeData, AiringScheduleData } from "@/types/anime";
+import {
+  anilistClient,
+  AniListRateLimitError,
+} from "@/lib/api/anilist";
 
 interface UseSeasonalAnimeReturn {
   data: AnimeData[];
   isLoading: boolean;
   error: Error | null;
   hasNextPage: boolean;
-  currentPage: number;
-  totalPages: number;
   isLoadingMore: boolean;
   loadMoreError: string | null;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
+  airingData: Map<number, AiringScheduleData>;
 }
 
 export function useSeasonalAnime(): UseSeasonalAnimeReturn {
   const [data, setData] = useState<AnimeData[]>([]);
+  const [airingData, setAiringData] = useState<Map<number, AiringScheduleData>>(
+    new Map()
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
   const getErrorMessage = (err: unknown, fallback: string) => {
-    if (err instanceof JikanRateLimitError) {
+    if (err instanceof AniListRateLimitError) {
       return err.message;
     }
     return fallback;
@@ -38,15 +42,22 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
       setError(null);
       setLoadMoreError(null);
 
-      const result: SearchAnimeResult = await jikanClient.getSeasonNow(page);
+      const result = await anilistClient.getSeasonNow(page);
       if (page === 1) {
         setData(result.data);
+        setAiringData(result.airingData);
       } else {
-        setData(prev => [...prev, ...result.data]);
+        setData((prev) => [...prev, ...result.data]);
+        setAiringData((prev) => {
+          const newMap = new Map(prev);
+          result.airingData.forEach((value, key) => {
+            newMap.set(key, value);
+          });
+          return newMap;
+        });
       }
       setCurrentPage(result.pagination.currentPage);
       setHasNextPage(result.pagination.hasNextPage);
-      setTotalPages(result.pagination.lastVisiblePage);
     } catch (err) {
       const message = getErrorMessage(err, "Failed to fetch seasonal anime");
       setError(new Error(message));
@@ -64,13 +75,22 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
     const nextPage = currentPage + 1;
 
     try {
-      const result: SearchAnimeResult = await jikanClient.getSeasonNow(nextPage);
-      setData(prev => [...prev, ...result.data]);
+      const result = await anilistClient.getSeasonNow(nextPage);
+      setData((prev) => [...prev, ...result.data]);
+      setAiringData((prev) => {
+        const newMap = new Map(prev);
+        result.airingData.forEach((value, key) => {
+          newMap.set(key, value);
+        });
+        return newMap;
+      });
       setCurrentPage(result.pagination.currentPage);
       setHasNextPage(result.pagination.hasNextPage);
     } catch (err) {
       console.error("Error loading more seasonal anime:", err);
-      setLoadMoreError(getErrorMessage(err, "Failed to load more seasonal anime."));
+      setLoadMoreError(
+        getErrorMessage(err, "Failed to load more seasonal anime.")
+      );
     } finally {
       setIsLoadingMore(false);
     }
@@ -85,11 +105,10 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
     isLoading,
     error,
     hasNextPage,
-    currentPage,
-    totalPages,
     isLoadingMore,
     loadMoreError,
     loadMore,
     refetch: () => fetchData(1),
+    airingData,
   };
 }

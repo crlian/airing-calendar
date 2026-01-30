@@ -62,7 +62,10 @@ export function CalendarView({ events, onRemoveAnime, preferences }: CalendarVie
   useEffect(() => {
     const calendarApi = calendarRef.current?.getApi();
     if (!calendarApi) return;
-    calendarApi.changeView(isMobile ? "listWeek" : "timeGridWeek");
+    // Defer view change to avoid flushSync warning during render
+    queueMicrotask(() => {
+      calendarApi.changeView(isMobile ? "listWeek" : "timeGridWeek");
+    });
   }, [isMobile]);
 
   return (

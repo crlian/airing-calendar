@@ -51,8 +51,9 @@ npm run build
 ```
 
 ## Attribution & Disclaimer
-- Data provided by Jikan API (unofficial MyAnimeList API).
-- This project is not affiliated with or endorsed by MyAnimeList or Jikan.
+- Data provided by AniList API (https://anilist.co).
+- This project is not affiliated with or endorsed by AniList.
+- Anime data and schedules are sourced from AniList's GraphQL API.
 
 ## License
 MIT. See `LICENSE`.

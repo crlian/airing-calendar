@@ -61,3 +61,9 @@ export interface SearchAnimeResult {
     totalItems: number;
   };
 }
+
+export interface AiringScheduleData {
+  nextEpisode: number;
+  airingAt: number; // Unix timestamp
+  lastFetched: number;
+}

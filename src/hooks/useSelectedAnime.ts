@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimeStorage } from "@/lib/storage/localStorage";
+import { AiringStorage } from "@/lib/storage/airingStorage";
 import type { AnimeData } from "@/types/anime";
 
 interface UseSelectedAnimeReturn {
@@ -36,6 +37,7 @@ export function useSelectedAnime(): UseSelectedAnimeReturn {
 
   const removeAnime = useCallback((id: number) => {
     AnimeStorage.removeAnime(id);
+    AiringStorage.removeAiring(id);
     setSelectedIds((prev) => prev.filter((currentId) => currentId !== id));
     setSelectedAnime((prev) => prev.filter((anime) => anime.mal_id !== id));
   }, []);

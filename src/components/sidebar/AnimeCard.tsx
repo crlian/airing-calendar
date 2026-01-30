@@ -8,13 +8,13 @@ import { Check, Plus } from "lucide-react";
 interface AnimeCardProps {
   anime: AnimeData;
   isSelected: boolean;
+  broadcastLabel?: string;
   onAddAnime: (anime: AnimeData) => void;
   onRemoveAnime: (id: number) => void;
 }
 
-function AnimeCardComponent({ anime, isSelected, onAddAnime, onRemoveAnime }: AnimeCardProps) {
+function AnimeCardComponent({ anime, isSelected, broadcastLabel, onAddAnime, onRemoveAnime }: AnimeCardProps) {
   const displayTitle = anime.title_english || anime.title;
-  const broadcastInfo = anime.broadcast?.string || "No broadcast info";
 
   return (
     <Card className="overflow-hidden">
@@ -41,9 +41,11 @@ function AnimeCardComponent({ anime, isSelected, onAddAnime, onRemoveAnime }: An
               </div>
             )}
 
-            <Badge variant="secondary" className="text-xs mb-2">
-              {broadcastInfo}
-            </Badge>
+            {broadcastLabel && (
+              <Badge variant="secondary" className="text-xs mb-2">
+                {broadcastLabel}
+              </Badge>
+            )}
 
             {anime.synopsis && (
               <p className="text-xs text-gray-600 line-clamp-2 mb-2">
