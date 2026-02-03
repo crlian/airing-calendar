@@ -3,17 +3,19 @@ import type { AnimeData } from "@/types/anime";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LiveBadge } from "@/components/LiveBadge";
 import { Check, Plus } from "lucide-react";
 
 interface AnimeCardProps {
   anime: AnimeData;
   isSelected: boolean;
   broadcastLabel?: string;
+  isAiringNow?: boolean;
   onAddAnime: (anime: AnimeData) => void;
   onRemoveAnime: (id: number) => void;
 }
 
-function AnimeCardComponent({ anime, isSelected, broadcastLabel, onAddAnime, onRemoveAnime }: AnimeCardProps) {
+function AnimeCardComponent({ anime, isSelected, broadcastLabel, isAiringNow: airing, onAddAnime, onRemoveAnime }: AnimeCardProps) {
   const displayTitle = anime.title_english || anime.title;
 
   return (
@@ -21,13 +23,18 @@ function AnimeCardComponent({ anime, isSelected, broadcastLabel, onAddAnime, onR
       <CardContent className="p-3">
         <div className="flex gap-3">
           {/* Thumbnail */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 relative">
             <img
               src={anime.images.jpg.small_image_url}
               alt={displayTitle}
               className="h-24 w-16 object-cover rounded border border-black"
               loading="lazy"
             />
+            {airing && (
+              <div className="absolute -top-1 -left-1">
+                <LiveBadge className="scale-75" />
+              </div>
+            )}
           </div>
 
           {/* Content */}
@@ -41,11 +48,14 @@ function AnimeCardComponent({ anime, isSelected, broadcastLabel, onAddAnime, onR
               </div>
             )}
 
-            {broadcastLabel && (
-              <Badge variant="secondary" className="text-xs mb-2">
-                {broadcastLabel}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2 mb-2">
+              {broadcastLabel && (
+                <Badge variant="secondary" className="text-xs">
+                  {broadcastLabel}
+                </Badge>
+              )}
+              {airing && <LiveBadge className="scale-75" />}
+            </div>
 
             {anime.synopsis && (
               <p className="text-xs text-gray-600 line-clamp-2 mb-2">

@@ -163,3 +163,54 @@ export function convertUnixToLocal(timestamp: number): LocalBroadcastTime | null
     return null;
   }
 }
+
+/**
+ * Parses duration string to minutes
+ * Handles formats like "24 min per ep" or "24min"
+ */
+function parseDurationToMinutes(duration?: string): number {
+  if (!duration) return 24; // Default 24 minutes
+
+  const match = duration.match(/(\d+)/);
+  if (match) {
+    const minutes = parseInt(match[1], 10);
+    return minutes > 0 && minutes < 180 ? minutes : 24;
+  }
+
+  return 24;
+}
+
+/**
+ * Checks if an anime is currently airing based on its broadcast time and duration
+ * @param startTime - ISO datetime string or Date when the episode starts
+ * @param duration - Duration string (e.g., "24 min per ep")
+ * @returns Boolean indicating if the anime is currently airing
+ */
+export function isAiringNow(startTime?: string | Date, duration?: string): boolean {
+  if (!startTime) return false;
+
+  try {
+    const now = DateTime.now();
+    const start = DateTime.fromJSDate(
+      typeof startTime === "string" ? new Date(startTime) : startTime
+    );
+
+    if (!start.isValid) return false;
+
+    // Check if it's the same day (within 24 hours)
+    const isSameDay = now.hasSame(start, 'day');
+    if (!isSameDay) {
+      return false;
+    }
+
+    // Calculate end time based on duration
+    const durationMinutes = parseDurationToMinutes(duration);
+    const end = start.plus({ minutes: durationMinutes });
+
+    // Check if current time is between start and end
+    return now >= start && now <= end;
+  } catch (error) {
+    console.error("Error checking if anime is airing:", error);
+    return false;
+  }
+}

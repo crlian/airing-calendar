@@ -1,4 +1,6 @@
-/* App-specific styles */
+/* App-specific styles - Brutalist Design */
+
+/* FullCalendar Base Overrides */
 .fc,
 .fc * {
   font-family: var(--font-sans);
@@ -8,199 +10,144 @@
   background: #ffffff;
 }
 
+/* Grid borders - clean lines */
+.fc .fc-view-harness {
+  border: 1px solid #000000;
+  border-radius: 0;
+}
+
 .fc .fc-scrollgrid,
-.fc .fc-scrollgrid-section > *,
-.fc .fc-timegrid-slot,
-.fc .fc-col-header-cell {
-  border-color: rgba(15, 23, 42, 0.06);
+.fc .fc-scrollgrid-section > * {
+  border: none;
+}
+
+.fc .fc-timegrid-slot {
+  border-top: 1px solid #e5e5e5;
 }
 
 .fc .fc-timegrid-slot-minor {
-  border-top-style: dotted;
-  border-top-color: rgba(15, 23, 42, 0.04);
+  border-top: none;
 }
 
+.fc .fc-col-header-cell {
+  border: 1px solid #000000;
+}
+
+.fc .fc-timegrid-col {
+  border-right: 1px solid #e5e5e5;
+}
+
+.fc .fc-timegrid-col:last-child {
+  border-right: none;
+}
+
+/* Today column - subtle highlight */
 .fc .fc-timegrid-col.fc-day-today {
-  background: rgba(30, 58, 138, 0.05);
+  background: #fafafa;
 }
 
+/* Now indicator - clean black line */
 .fc .fc-now-indicator-line {
-  border-top: 2px solid #dc2626;
-  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.12);
+  border-top: 2px solid #000000;
   position: relative;
 }
 
 .fc .fc-now-indicator-arrow {
-  border-left-color: #dc2626;
-  border-right-color: #dc2626;
-}
-
-.fc .fc-now-indicator-line::after {
-  content: "Now";
-  position: absolute;
-  left: 8px;
-  top: -12px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 2px 6px;
-  border-radius: 999px;
-  box-shadow: 0 6px 12px rgba(220, 38, 38, 0.18);
-}
-
-.fc .fc-toolbar-title {
   display: none;
 }
 
-.fc .fc-toolbar-chunk:nth-child(2) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.fc .fc-now-indicator-line::after {
+  content: "NOW";
+  position: absolute;
+  left: 4px;
+  top: -9px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 0;
 }
 
-.fc .fc-toolbar-chunk:nth-child(2)::before {
-  content: "This week";
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: #0f172a;
-}
-
-.fc .fc-button {
-  border-radius: 999px;
-  padding: 6px 14px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: #fff;
-  color: #0f172a;
-  box-shadow: none;
-}
-
-.fc .fc-button:hover {
-  background: rgba(15, 23, 42, 0.04);
-}
-
-.fc .fc-button-primary:hover,
-.fc .fc-button-primary:focus,
-.fc .fc-button-primary:focus-visible {
-  background: rgba(15, 23, 42, 0.08);
-  color: #0f172a;
-}
-
-.fc .fc-button-primary {
-  border-color: rgba(15, 23, 42, 0.12);
-  background: #fff;
-  color: #0f172a;
-}
-
-.fc .fc-button.fc-today-button {
-  border-color: rgba(30, 58, 138, 0.2);
-  background: rgba(30, 58, 138, 0.08);
-  color: #1e3a8a;
-}
-
-.fc .fc-button.fc-today-button:hover,
-.fc .fc-button.fc-today-button:focus,
-.fc .fc-button.fc-today-button:focus-visible {
-  background: rgba(30, 58, 138, 0.14);
-  color: #1e3a8a;
-}
-
-.fc .fc-button:disabled {
-  opacity: 0.5;
-}
-
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active {
-  background: rgba(15, 23, 42, 0.06);
-  border-color: rgba(15, 23, 42, 0.14);
-  color: #0f172a;
-}
-
+/* Header time labels */
 .fc .fc-timegrid-axis-cushion {
   font-size: 13px;
-  color: rgba(15, 23, 42, 0.75);
-  font-weight: 700;
-  font-family: "Playfair Display", serif !important;
+  color: #000000;
+  font-weight: 600;
+  font-family: var(--font-display), serif;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
+/* Column headers (Mon, Tue, etc) */
 .fc .fc-col-header-cell-cushion {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(15, 23, 42, 0.7);
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 4px;
 }
 
+/* Events - clean brutalist */
 .fc .fc-timegrid-event,
 .fc .fc-daygrid-event {
   background: transparent;
   border: none;
+  box-shadow: none;
+  margin: 1px 2px;
 }
 
-.fc .fc-event .fc-event-main {
-  color: #0f172a;
+.anime-event-card {
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.fc .fc-list-event {
-  background: transparent;
+.anime-event-card:hover {
+  background: #f5f5f5;
 }
 
-.fc .fc-list-event td {
-  border-color: rgba(15, 23, 42, 0.06);
-  padding: 0;
+.anime-event-dot {
+  background: #000000;
+  flex-shrink: 0;
 }
 
-.fc .fc-list-event-time,
-.fc .fc-list-event-graphic {
-  display: none;
-}
-
-.fc .fc-list-event-title {
-  padding: 10px 12px;
-}
-
-.fc .fc-list-day-cushion {
-  background: transparent;
-  font-family: var(--font-display);
+.anime-event-time {
+  color: #000000;
+  font-size: 10px;
   font-weight: 600;
-  color: #0f172a;
-  padding: 10px 12px;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+  margin-bottom: 2px;
 }
 
-.fc-theme-standard .fc-list-day-cushion {
-  border-color: rgba(15, 23, 42, 0.06);
-}
-
+/* List view - brutalist cards */
 .anime-list-card {
   display: flex;
   gap: 14px;
   align-items: center;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 14px;
-  background: #fff;
+  border: 2px solid #000000;
+  border-radius: 0;
+  background: #ffffff;
   padding: 12px;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  box-shadow: none;
+  transition: background 150ms ease;
   cursor: default;
 }
 
 .anime-list-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.12);
-  border-color: rgba(15, 23, 42, 0.16);
+  background: #f5f5f5;
 }
 
 .anime-list-thumb {
   height: 64px;
   width: 48px;
-  border-radius: 10px;
+  border: 1px solid #000000;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
 }
 
 .anime-list-thumb img {
@@ -219,13 +166,14 @@
 
 .anime-list-title {
   font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 700;
+  color: #000000;
 }
 
 .anime-list-subtitle {
   font-size: 12px;
-  color: rgba(15, 23, 42, 0.6);
+  color: #000000;
+  opacity: 0.6;
 }
 
 .anime-list-meta {
@@ -233,26 +181,52 @@
   flex-wrap: wrap;
   gap: 10px;
   font-size: 12px;
-  color: rgba(15, 23, 42, 0.65);
-  font-weight: 500;
-}
-
-.anime-list-score {
-  color: #1e3a8a;
+  color: #000000;
+  opacity: 0.7;
   font-weight: 600;
 }
 
-.anime-event-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(15, 23, 42, 0.16);
-  border-radius: 10px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+.anime-list-score {
+  color: #000000;
+  font-weight: 700;
 }
 
-.anime-event-dot {
-  background: #1e3a8a;
+/* List view day headers */
+.fc .fc-list-day-cushion {
+  background: #000000;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.anime-event-time {
-  color: rgba(15, 23, 42, 0.6);
+.fc-theme-standard .fc-list-day-cushion {
+  border-color: #000000;
+}
+
+.fc .fc-list-event {
+  background: transparent;
+}
+
+.fc .fc-list-event td {
+  border-color: #000000;
+  border-bottom: 1px solid #000000;
+  padding: 0;
+}
+
+.fc .fc-list-event-time,
+.fc .fc-list-event-graphic {
+  display: none;
+}
+
+.fc .fc-list-event-title {
+  padding: 10px 12px;
+}
+
+/* Toolbar - hidden since we use custom header */
+.fc .fc-toolbar {
+  display: none;
 }

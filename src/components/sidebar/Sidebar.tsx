@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { anilistClient, AniListRateLimitError, type AniListAnimeResult } from "@/lib/api/anilist";
 import { AiringStorage } from "@/lib/storage/airingStorage";
 import { formatMinutes, getEpisodeMinutes } from "@/lib/utils/duration";
+import { useLiveStatus } from "@/hooks/useLiveStatus";
 import type { CalendarPreferences } from "@/types/preferences";
 import { changelogEntries } from "@/data/changelog";
 import { DateTime } from "luxon";
@@ -143,6 +144,22 @@ export function Sidebar({
   const [startHourInput, setStartHourInput] = useState(
     () => `${calendarPreferences.startHour}`
   );
+  
+  // Hook to track which anime are currently airing
+  const liveStatus = useLiveStatus(calendarEvents);
+  const liveAnimeIds = useMemo(() => {
+    const ids = new Set<number>();
+    calendarEvents.forEach((event) => {
+      if (liveStatus[event.id]) {
+        const animeId = parseInt(event.id.replace("anime-", ""), 10);
+        if (!Number.isNaN(animeId)) {
+          ids.add(animeId);
+        }
+      }
+    });
+    return ids;
+  }, [calendarEvents, liveStatus]);
+  
   const visibleChangelog = changelogEntries.slice(0, 4);
   const latestChangelogDate = useMemo(() => {
     return changelogEntries.reduce<DateTime | null>((latest, entry) => {
@@ -616,12 +633,16 @@ export function Sidebar({
                   broadcastLabel = formatJstBroadcast(airingInfo.airingAt);
                 }
 
+                // Check if anime is currently airing (simple check using live status)
+                const airing = liveAnimeIds.has(anime.mal_id);
+
                 return (
                   <AnimeCard
                     key={anime.mal_id}
                     anime={anime}
                     isSelected={selectedIds.includes(anime.mal_id)}
                     broadcastLabel={broadcastLabel}
+                    isAiringNow={airing}
                     onAddAnime={() => {
                       onAddAnime(anime);
                       // Also save airing data if available

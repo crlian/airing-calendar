@@ -241,6 +241,7 @@ function App() {
               events={calendarEvents}
               onRemoveAnime={removeAnime}
               preferences={preferences}
+              selectedCount={selectedIds.length}
             />
           </Suspense>
         )}
