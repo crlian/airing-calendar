@@ -221,18 +221,47 @@ function App() {
       >
         {selectedIds.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-600">
-            <div className="text-center">
-              <h2 className="text-2xl font-display font-semibold mb-2">
-                Welcome to Anime Season
-              </h2>
-              <p className="text-lg mb-4">
-                Search for anime and add them to your calendar to get started
+            <div className="text-center max-w-2xl px-4">
+              <h1 className="text-2xl font-display font-semibold mb-2 text-black">
+                Weekly Anime Airing Schedule in Your Time Zone
+              </h1>
+              <p className="text-base md:text-lg mb-4">
+                Track this week's anime releases, convert airing times to your local timezone, and build your personal watch calendar.
               </p>
-              <ol className="text-sm text-gray-500 space-y-1">
+              <ol className="text-sm text-gray-500 space-y-1 mb-5">
                 <li>1. Browse seasonal anime or search by title.</li>
                 <li>2. Click Add to include it in your schedule.</li>
-                <li>3. See the weekly airings in your time zone.</li>
+                <li>3. See weekly airings automatically converted to your timezone.</li>
               </ol>
+
+              <div className="rounded-lg border border-gray-200 bg-white p-4 text-left mb-4">
+                <h2 className="font-semibold text-black mb-2">Helpful pages</h2>
+                <ul className="text-sm text-gray-700 space-y-1 list-disc pl-5">
+                  <li><a className="text-blue-600 hover:underline" href="/anime-airing-schedule-spring-2026/">Spring 2026 anime airing schedule</a></li>
+                  <li><a className="text-blue-600 hover:underline" href="/anime-release-calendar-this-week/">Anime release calendar this week</a></li>
+                  <li><a className="text-blue-600 hover:underline" href="/anime-timezone-schedule-converter/">Anime timezone schedule converter</a></li>
+                  <li><a className="text-blue-600 hover:underline" href="/anime-airing-schedule-this-weekend/">Anime airing schedule this weekend</a></li>
+                  <li><a className="text-blue-600 hover:underline" href="/new-season-anime-calendar/">New season anime calendar</a></li>
+                </ul>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-white p-4 text-left">
+                <h2 className="font-semibold text-black mb-2">FAQ</h2>
+                <dl className="space-y-3 text-sm">
+                  <div>
+                    <dt className="font-medium text-gray-900">How do I see anime airing times in my local timezone?</dt>
+                    <dd className="text-gray-600">AniSeason converts weekly airing times automatically based on your device timezone.</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-gray-900">Can I build a personal anime watch schedule?</dt>
+                    <dd className="text-gray-600">Yes. Add anime titles from browse/search and your weekly calendar updates instantly.</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-gray-900">Does AniSeason update with seasonal anime releases?</dt>
+                    <dd className="text-gray-600">Yes. Seasonal data updates and you can browse current releases week by week.</dd>
+                  </div>
+                </dl>
+              </div>
             </div>
           </div>
         ) : (
