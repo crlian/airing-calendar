@@ -1,33 +1,53 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spring 2026 Anime Airing Schedule | AniSeason</title>
-    <meta name="description" content="Spring 2026 anime airing schedule in your local timezone. Track weekly release times and build your personal anime calendar on AniSeason." />
-    <link rel="canonical" href="https://www.aniseason.com/anime-airing-schedule-spring-2026/" />
-    <meta name="robots" content="index,follow" />
-    <meta property="og:title" content="Spring 2026 Anime Airing Schedule" />
-    <meta property="og:description" content="Spring 2026 anime airing schedule in your local timezone. Track weekly release times and build your personal anime calendar on AniSeason." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.aniseason.com/anime-airing-schedule-spring-2026/" />
-    <meta property="og:image" content="https://www.aniseason.com/anime-season.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:860px;margin:40px auto;padding:0 16px;line-height:1.65;color:#111}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.cta{display:inline-block;margin-top:16px;padding:12px 18px;background:#111;color:#fff;border-radius:10px}.box{margin-top:18px;border:1px solid #e5e7eb;padding:14px;border-radius:12px;background:#fff}</style>
-  </head>
-  <body>
-    <h1>Spring 2026 Anime Airing Schedule</h1>
-    <p>Spring 2026 anime airing schedule in your local timezone. Track weekly release times and build your personal anime calendar on AniSeason.</p>
-    <p>Use AniSeason to browse titles, add your favorites, and track weekly airing times automatically converted to your timezone.</p>
-    <a class="cta" href="https://www.aniseason.com/">Open AniSeason</a>
-    <div class="box">
-      <h2>Related anime schedule pages</h2>
-      <ul>
-        <li><a href="https://www.aniseason.com/anime-release-calendar-this-week/">Anime Release Calendar This Week</a></li>
-<li><a href="https://www.aniseason.com/anime-timezone-schedule-converter/">Anime Timezone Schedule Converter</a></li>
-<li><a href="https://www.aniseason.com/anime-airing-schedule-this-weekend/">Anime Airing Schedule This Weekend</a></li>
-<li><a href="https://www.aniseason.com/new-season-anime-calendar/">New Season Anime Calendar</a></li>
-      </ul>
-    </div>
-  </body>
-</html>
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spring 2026 Anime Airing Schedule | AniSeason</title>
+<meta name="description" content="Browse a live anime airing schedule powered by AniList API and automatically converted to your local timezone." />
+<link rel="canonical" href="https://www.aniseason.com/anime-airing-schedule-spring-2026/" />
+<meta name="robots" content="index,follow" />
+<meta property="og:title" content="Spring 2026 Anime Airing Schedule" />
+<meta property="og:description" content="Browse a live anime airing schedule powered by AniList API and automatically converted to your local timezone." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.aniseason.com/anime-airing-schedule-spring-2026/" />
+<meta property="og:image" content="https://www.aniseason.com/anime-season.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:980px;margin:32px auto;padding:0 16px;line-height:1.6;color:#111;background:#fafafa}h1{line-height:1.2;margin-bottom:8px}p{color:#374151}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.cta{display:inline-block;margin-top:12px;padding:12px 18px;background:#111;color:#fff;border-radius:10px}.card{border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}.meta{font-size:13px;color:#4b5563}.pill{display:inline-block;background:#f3f4f6;border-radius:99px;padding:2px 8px;font-size:12px;margin-top:6px}.links{margin-top:18px;border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:14px}</style>
+</head><body>
+<h1>Spring 2026 Anime Airing Schedule</h1><p>Browse a live anime airing schedule powered by AniList API and automatically converted to your local timezone.</p><a class="cta" href="https://www.aniseason.com/">Open full interactive calendar</a>
+<h2 style="margin-top:24px">Live anime from API</h2><p class="meta">Data source: AniList GraphQL · Times shown in your local timezone</p>
+<div id="status" class="meta">Loading live schedule…</div><div id="list" class="grid" aria-live="polite"></div>
+<div class="links"><h3>Related pages</h3><ul>
+<li><a href="https://www.aniseason.com/anime-airing-schedule-spring-2026/">Spring 2026 anime airing schedule</a></li>
+<li><a href="https://www.aniseason.com/anime-release-calendar-this-week/">Anime release calendar this week</a></li>
+<li><a href="https://www.aniseason.com/anime-timezone-schedule-converter/">Anime timezone schedule converter</a></li>
+<li><a href="https://www.aniseason.com/anime-airing-schedule-this-weekend/">Anime airing schedule this weekend</a></li>
+<li><a href="https://www.aniseason.com/new-season-anime-calendar/">New season anime calendar</a></li>
+</ul></div>
+<script>
+(async function() {
+ const MODE="all";
+ const statusEl=document.getElementById('status');
+ const listEl=document.getElementById('list');
+ const nowUtc=new Date();
+ const month=nowUtc.getUTCMonth()+1;
+ const year=nowUtc.getUTCFullYear();
+ const season=month<=3?'WINTER':month<=6?'SPRING':month<=9?'SUMMER':'FALL';
+ const query=`query($page:Int,$perPage:Int,$season:MediaSeason,$seasonYear:Int){
+  Page(page:$page, perPage:$perPage){
+   media(seasonYear:$seasonYear, type:ANIME, season:$season, sort:POPULARITY_DESC, isAdult:false){
+    idMal title{romaji english} coverImage{medium} nextAiringEpisode{airingAt episode} status
+   }
+  }
+ }`;
+ const res=await fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({query,variables:{page:1,perPage:40,season,seasonYear:year}})});
+ if(!res.ok) throw new Error('API request failed');
+ const json=await res.json();
+ const media=(json?.data?.Page?.media||[]).filter(m=>m&&m.idMal&&m.nextAiringEpisode&&m.nextAiringEpisode.airingAt);
+ const now=new Date(); const weekLater=new Date(now.getTime()+7*24*60*60*1000);
+ const filtered=media.filter(m=>{const dt=new Date(m.nextAiringEpisode.airingAt*1000);const d=dt.getDay();if(MODE==='weekend') return d===0||d===6; if(MODE==='week') return dt>=now&&dt<=weekLater; return true;}).sort((a,b)=>a.nextAiringEpisode.airingAt-b.nextAiringEpisode.airingAt).slice(0,24);
+ if(!filtered.length){statusEl.textContent='No upcoming items found right now. Open the full calendar for complete data.';return;}
+ const tf=new Intl.DateTimeFormat(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'});
+ listEl.innerHTML=filtered.map(m=>{const t=m.title.english||m.title.romaji||'Unknown';const air=new Date(m.nextAiringEpisode.airingAt*1000);return `<article class="card"><img src="${m.coverImage?.medium||''}" alt="${t} poster" loading="lazy" style="width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;background:#f3f4f6" /><h3 style="margin:10px 0 4px;font-size:16px">${t}</h3><div class="meta">Ep ${m.nextAiringEpisode.episode} · ${tf.format(air)}</div><div class="pill">${m.status||'RELEASING'}</div></article>`;}).join('');
+ statusEl.textContent=`Showing ${filtered.length} upcoming anime from the current season.`;
+})().catch(()=>{const statusEl=document.getElementById('status');if(statusEl)statusEl.textContent='Could not load live API data right now. Please open the full calendar.';});
+</script>
+</body></html>
