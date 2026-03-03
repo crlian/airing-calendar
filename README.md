@@ -32,6 +32,8 @@ The tracker collects: session ID, visited page, referrer, timestamp, user agent,
 
 ## Development
 
+> Note: Tiny documentation update to verify automated push workflow.
+
 Install dependencies:
 
 ```bash
