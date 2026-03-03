@@ -8,14 +8,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>AniSeason | Anime Season Calendar</title>
+    <title>AniSeason | Weekly Anime Airing Schedule in Your Time Zone</title>
     <meta
       name="description"
-      content="Track weekly anime airings in your local time zone. Search seasonal anime and build a personalized schedule."
+      content="Track weekly anime airing times in your local timezone. Browse seasonal releases, search titles, and build your personal anime schedule."
     />
     <meta name="theme-color" content="#0B0F1A" />
     <meta name="robots" content="index,follow" />
-    <link rel="canonical" href="https://aniseason.com/" />
+    <link rel="canonical" href="https://www.aniseason.com/" />
     <meta property="og:title" content="AniSeason" />
     <meta property="og:site_name" content="AniSeason" />
     <meta
@@ -23,8 +23,8 @@
       content="Track weekly anime airings in your local time zone. Search seasonal anime and build a personalized schedule."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://aniseason.com/" />
-    <meta property="og:image" content="https://aniseason.com/anime-season.png" />
+    <meta property="og:url" content="https://www.aniseason.com/" />
+    <meta property="og:image" content="https://www.aniseason.com/anime-season.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -33,7 +33,21 @@
       name="twitter:description"
       content="Track weekly anime airings in your local time zone. Search seasonal anime and build a personalized schedule."
     />
-    <meta name="twitter:image" content="https://aniseason.com/anime-season.png" />
+    <meta name="twitter:image" content="https://www.aniseason.com/anime-season.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "AniSeason",
+        "url": "https://www.aniseason.com/",
+        "description": "Weekly anime airing calendar converted to your local timezone.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://www.aniseason.com/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
     <!-- Visitor tracker for Telegram notifications -->
     <script src="/tracker.js"></script>
   </head>

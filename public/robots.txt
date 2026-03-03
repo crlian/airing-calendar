@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /api/
 
-Sitemap: https://aniseason.com/sitemap.xml
+Sitemap: https://www.aniseason.com/sitemap.xml

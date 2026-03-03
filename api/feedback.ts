@@ -1,6 +1,4 @@
-const WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL ||
-  "https://crlian.site/webhook-test/f2cb5b42-4f39-4087-9c7e-bf7d4df6e8f6";
+const WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || "";
 
 const MAX_MESSAGE_LENGTH = 1000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
