@@ -5,7 +5,7 @@ import { SearchBar } from "./SearchBar";
 import { AnimeCard } from "./AnimeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { anilistClient, AniListRateLimitError, type AniListAnimeResult } from "@/lib/api/anilist";
+import { anilistClient, AniListRateLimitError, type AniListAnimeResult, type DataSource } from "@/lib/api/anilist";
 import { AiringStorage } from "@/lib/storage/airingStorage";
 import { formatMinutes, getEpisodeMinutes } from "@/lib/utils/duration";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -43,6 +43,7 @@ interface SidebarProps {
   seasonalIsLoadingMore: boolean;
   seasonalLoadMoreError: string | null;
   onLoadMoreSeasonal: () => Promise<void>;
+  dataSource: DataSource | null;
 }
 
 const SEARCH_CACHE_KEY = "anime-calendar:search-cache";
@@ -121,6 +122,7 @@ export function Sidebar({
   seasonalIsLoadingMore,
   seasonalLoadMoreError,
   onLoadMoreSeasonal,
+  dataSource,
 }: SidebarProps) {
   const [searchResults, setSearchResults] = useState<AnimeData[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -702,8 +704,18 @@ export function Sidebar({
             GitHub
           </a>
         </div>
-        <div className="mt-2 text-[11px] text-gray-500">
-          Data via AniList API. Not affiliated with AniList.
+        <div className="mt-2 text-[11px] text-gray-500 flex items-center gap-1.5">
+          {dataSource === "jikan" ? (
+            <>
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-yellow-400 flex-shrink-0" />
+              <span>Data via MyAnimeList — AniList unavailable</span>
+            </>
+          ) : (
+            <>
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-400 flex-shrink-0" />
+              <span>Data via AniList API</span>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import type { AnimeData, AiringScheduleData } from "@/types/anime";
 import {
   anilistClient,
   AniListRateLimitError,
+  type DataSource,
 } from "@/lib/api/anilist";
 
 interface UseSeasonalAnimeReturn {
@@ -15,6 +16,7 @@ interface UseSeasonalAnimeReturn {
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
   airingData: Map<number, AiringScheduleData>;
+  source: DataSource | null;
 }
 
 export function useSeasonalAnime(): UseSeasonalAnimeReturn {
@@ -28,6 +30,7 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [source, setSource] = useState<DataSource | null>(null);
 
   const getErrorMessage = (err: unknown, fallback: string) => {
     if (err instanceof AniListRateLimitError) {
@@ -43,6 +46,7 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
       setLoadMoreError(null);
 
       const result = await anilistClient.getSeasonNow(page);
+      setSource(result.source);
       if (page === 1) {
         setData(result.data);
         setAiringData(result.airingData);
@@ -110,5 +114,6 @@ export function useSeasonalAnime(): UseSeasonalAnimeReturn {
     loadMore,
     refetch: () => fetchData(1),
     airingData,
+    source,
   };
 }
