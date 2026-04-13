@@ -133,20 +133,28 @@ class AnimeApiClient {
     this.saveCacheToStorage();
   }
 
-  private parseListResponse(json: ProxyListResponse): AniListAnimeResult {
-    const airingData = new Map<number, AiringScheduleData>();
-    for (const [key, value] of Object.entries(json.airingData || {})) {
-      airingData.set(Number(key), {
-        nextEpisode: value.nextEpisode,
-        airingAt: value.airingAt,
-        lastFetched: Date.now(),
-      });
+  private toAiringMap(raw: unknown): Map<number, AiringScheduleData> {
+    const map = new Map<number, AiringScheduleData>();
+    if (!raw || typeof raw !== "object") return map;
+    // Handle both Map instances (in-memory cache) and plain objects (localStorage)
+    const entries = raw instanceof Map ? raw.entries() : Object.entries(raw);
+    for (const [key, value] of entries) {
+      if (value && typeof value === "object" && "airingAt" in value) {
+        map.set(Number(key), {
+          nextEpisode: (value as AiringScheduleData).nextEpisode,
+          airingAt: (value as AiringScheduleData).airingAt,
+          lastFetched: (value as AiringScheduleData).lastFetched ?? Date.now(),
+        });
+      }
     }
+    return map;
+  }
 
+  private parseListResponse(json: ProxyListResponse): AniListAnimeResult {
     return {
       data: json.data,
       pagination: json.pagination,
-      airingData,
+      airingData: this.toAiringMap(json.airingData),
       source: json.source,
     };
   }
@@ -157,7 +165,10 @@ class AnimeApiClient {
   async getSeasonNow(page: number = 1): Promise<AniListAnimeResult> {
     const cacheKey = `seasonal:${page}`;
     const cached = this.getCached<AniListAnimeResult>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      cached.airingData = this.toAiringMap(cached.airingData);
+      return cached;
+    }
 
     const response = await fetch(`/api/anime?action=seasonal&page=${page}`);
 
@@ -190,7 +201,10 @@ class AnimeApiClient {
 
     const cacheKey = `search:${query.toLowerCase()}:${page}`;
     const cached = this.getCached<AniListAnimeResult>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      cached.airingData = this.toAiringMap(cached.airingData);
+      return cached;
+    }
 
     const params = new URLSearchParams({ action: "search", q: query, page: String(page) });
     const response = await fetch(`/api/anime?${params}`);
