@@ -182,7 +182,10 @@ class AnimeApiClient {
 
     const json: ProxyListResponse = await response.json();
     const result = this.parseListResponse(json);
-    this.setCache(cacheKey, result);
+    this.setCache(cacheKey, {
+      ...result,
+      airingData: Object.fromEntries(result.airingData),
+    });
     return result;
   }
 
@@ -219,7 +222,10 @@ class AnimeApiClient {
 
     const json: ProxyListResponse = await response.json();
     const result = this.parseListResponse(json);
-    this.setCache(cacheKey, result);
+    this.setCache(cacheKey, {
+      ...result,
+      airingData: Object.fromEntries(result.airingData),
+    });
     return result;
   }
 
